@@ -14,6 +14,8 @@ To run this app, run `streamlit run streamlit_app.py` from inside this directory
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+import time
 
 # PART 1
 
@@ -31,31 +33,27 @@ import matplotlib.pyplot as plt
 # ''')
 
 #PART 2
-
+st.markdown("<h2 style='text-align: center;'>  &nbsp; &nbsp;  &nbsp;  &nbsp;  &nbsp; <B>Experiments in Captioning, <i>Wit</i> a Twist </B></h2>", unsafe_allow_html=True)
+st.markdown("<h3 style='text-align: center;'> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; The Amusemater Captioner</h3>", unsafe_allow_html=True)
+st.markdown("<P>  &nbsp; </P>", unsafe_allow_html=True)
+st.markdown("<P>  &nbsp; </P>", unsafe_allow_html=True)
 st.write(
 '''
-You can use markdown syntax to style your text
-
-Headers:
-# Main Title
-## Sub Title
-### header
-
-**bold text**
-
-*italics*
-
-Ordered List
-
-1. Apples
-2. Oranges
-3. Bananas
-
-[This is a link](https://docs.streamlit.io/en/stable/getting_started.html)
+ &nbsp;
 
 
 '''
+
 )
+
+def generate_image_and_caption():
+    time.sleep(5)
+
+
+generate_image_and_caption()
+img = mpimg.imread('data/image_with_caption.png')
+st.image(img, width=800)
+
 
 # PART 3
 

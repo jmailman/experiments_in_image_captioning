@@ -912,7 +912,6 @@ def process_best_captions_df_and_make_list(cand_df):
 # # In[1136]:
 #
 #
-#@st.cache
 def get_display_df(best_captions_df_):
     best_captions_display_df = best_captions_df_[['caption', 'dist_score', 'semantic_match', 'sem_dist', 'phonetic_match', 'phon_dist']]
     best_captions_display_df['caption'] =best_captions_display_df['caption'].apply(lambda x: x.capitalize())
@@ -1006,7 +1005,7 @@ def make_image_with_caption( image, caption):
 #     return cand_df_
 
 #def process_next_image( idiom_list_, cand_df_ ):
-
+@st.cache
 def process_next_image( ):
 
     seed_the_phrase_dictionary_with_examples()
@@ -1069,23 +1068,21 @@ display_image()
 st.markdown("<P>  &nbsp; </P>", unsafe_allow_html=True)
 st.markdown("<P>  &nbsp; </P>", unsafe_allow_html=True)
 
-
-display_df = process_next_image()
-
-show_other_captions = True
+show_other_captions = False
 caption_another = st.button('Caption another picture')
 
-# if(caption_another):
-#     caption_another=False
-#     display_df = process_next_image()
-#     show_other_captions = False
+if(caption_another):
+    caption_another=False
+    display_df = process_next_image()
+
 
 #if st.button('Caption another picture'):
 #    display_df = process_next_image()
 
 
-show_other_captions = st.checkbox('Show other captions', value=True)
+#show_other_captions = st.checkbox('Show other captions', value=True)
 #show_other_captions = st.checkbox('Show other captions', value=show_other_captions)
+show_other_captions = st.checkbox('Show other captions')
 
 if show_other_captions:
     #st.write(display_df)

@@ -138,7 +138,7 @@ from tf_explain.core.activations import ExtractActivations
 from tensorflow.keras.applications.xception import decode_predictions
 
 
-#%matplotlib inline
+#get_ipython().run_line_magic('matplotlib', 'inline')
 
 
 
@@ -263,16 +263,14 @@ words_set = set( words.words())
 
 import eng_to_ipa as ipa
 
-def syllable_count_diff( w1, w2, syllable_count_dict_ ):
-    if w2 not in words_set:
-        syllable_count_dict_[w2] = ipa.syllable_count( w2 )
-    return abs( syllable_count_dict_[ w1 ] - syllable_count_dict_[ w2 ])
+def syllable_count_diff( w1, w2 ):
+    return abs( ipa.syllable_count( w1 ) - ipa.syllable_count( w2 ))
 
-def same_syllable_count( w1, w2, syllable_count_dict_  ):
-    return syllable_count_diff(w1, w2, syllable_count_dict_ ) == 0
+def same_syllable_count( w1, w2 ):
+    return syllable_count_diff(w1, w2) == 0
 
-def close_syllable_count( w1, w2, syllable_count_dict_, threshold=2):
-    return syllable_count_diff( w1, w2, syllable_count_dict_ ) <= threshold
+def close_syllable_count( w1, w2, threshold=2):
+    return syllable_count_diff( w1, w2 ) <= threshold
 
 
 
@@ -282,11 +280,21 @@ def close_syllable_count( w1, w2, syllable_count_dict_, threshold=2):
 
 # Rewrite this so it vectorizes the subtraction of the syllable counts
 
-def get_sized_rhymes( w, syllable_count_dict_ ):
+def get_sized_rhymes( w ):
     word_length_min = 2
     rhyme_list = ipa.get_rhymes( w )
-    return [ [rhyme for rhyme  in rhyme_list if same_syllable_count( w, rhyme, syllable_count_dict_) and len(rhyme) >= word_length_min and rhyme in words_set]]
+    return [ [rhyme for rhyme  in rhyme_list if same_syllable_count( w, rhyme) and len(rhyme) >= word_length_min and rhyme in words_set]]
 
+
+
+
+
+
+
+
+
+
+#ipa.isin_cmu('xue')
 
 
 
@@ -300,13 +308,13 @@ import fuzzy
 import phonetics
 import Levenshtein as lev
 
-#soundex = fuzzy.Soundex(4)
+soundex = fuzzy.Soundex(4)
 dmeta = fuzzy.DMetaphone()
 
 
 
 
-def phonetic_distance(w1, w2, fuzzy_meta_dict_, fuzzy_nysiis_dict_):
+def phonetic_distance(w1, w2):
 #     print('fuzzy soundex', lev.distance( soundex(w1), soundex(w2)) )
 #     print('fuzzy dmeta  ', lev.distance( dmeta(w1)[0], dmeta(w2)[0]) )
 #     print('phon dmet    ', lev.distance( phonetics.dmetaphone(w1)[0], phonetics.dmetaphone(w2)[0]) )
@@ -314,13 +322,9 @@ def phonetic_distance(w1, w2, fuzzy_meta_dict_, fuzzy_nysiis_dict_):
 #     print('fuzzy nysiis ', lev.distance( fuzzy.nysiis(w1), fuzzy.nysiis(w2)) )
 #     print('phon nysiis  ', lev.distance( phonetics.nysiis(w1), phonetics.nysiis(w2)) )
 #     soundex_dist = lev.distance( soundex(w1), soundex(w2))
-    if w2 not in words_set:
-        fuzzy_nysiis_dict_[w2] = fuzzy.nysiis(w2)
-        fuzzy_meta_dict_[w2] = dmeta(w2)[0]
-
-    nysiis_dist = lev.distance( fuzzy_nysiis_dict_[w1],fuzzy_nysiis_dict_[w2])
+    nysiis_dist = lev.distance( fuzzy.nysiis(w1), fuzzy.nysiis(w2))
     try:
-        dmeta_dist  = lev.distance( fuzzy_meta_dict_[w1],fuzzy_meta_dict_[w2])
+        dmeta_dist  = lev.distance( dmeta(w1)[0], dmeta(w2)[0])
         return np.mean( np.array([  dmeta_dist, nysiis_dist]) )
     except:
         return nysiis_dist
@@ -328,12 +332,8 @@ def phonetic_distance(w1, w2, fuzzy_meta_dict_, fuzzy_nysiis_dict_):
 
 
 
-
-
-import eng_to_ipa as ipa
-def syllable_penalty(w1, w2, syllable_count_dict_, penalty_factor = 0.2):
-
-    return syllable_count_diff( w1, w2, syllable_count_dict_ ) * penalty_factor
+def syllable_penalty(w1, w2, penalty_factor = 0.2):
+    return syllable_count_diff( w1, w2 ) * penalty_factor
 
 
 
@@ -344,57 +344,29 @@ def last_letter_discount(w1, w2, discount_value = .25):
 
 
 
-with open("data/" + "fuzzy_meta_dictionary.pickle", 'rb') as to_read:
-    fuzzy_meta_dict =  pickle.load(to_read)
-with open("data/" + "fuzzy_nysiis_dictionary.pickle", 'rb') as to_read:
-    fuzzy_nysiis_dict =  pickle.load(to_read)
-with open("data/" + "syllable_count_dictionary.pickle", 'rb') as to_read:
-    syllable_count_dict =  pickle.load(to_read)
-
-
-
-
-#'sweatshirt' in words_set
-
-
-
-
-#syllable_count_dict['sweatshirt']
-
-
-
-
 from random import random
 
 def make_phon_fam_for_sem_fam_member( w_record, thresh=3 ):
-    with open("data/" + "fuzzy_meta_dictionary.pickle", 'rb') as to_read:
-        fuzzy_meta_dict =  pickle.load(to_read)
-    with open("data/" + "fuzzy_nysiis_dictionary.pickle", 'rb') as to_read:
-        fuzzy_nysiis_dict =  pickle.load(to_read)
-    with open("data/" + "syllable_count_dictionary.pickle", 'rb') as to_read:
-        syllable_count_dict =  pickle.load(to_read)
-
-
     w_phon_code = w_record.word # To be replaced with phonetic version if needed
     close_word_list = []
     rhyme_dist = .3
     non_rhyme_penalty = rhyme_dist + .3
 
     # Find words that are not necessarily rhyms but phonetically similar
-    for word in words_set:
-        phon_dist = phonetic_distance( word, w_record.word, fuzzy_meta_dict, fuzzy_nysiis_dict)
-        if (phon_dist <= thresh) and (word != w_record.word):
-            syll_pen = syllable_penalty( word, w_record.word, syllable_count_dict)
-            last_let_disc = last_letter_discount(word, w_record.word)
-            close_word_list.append( Close_word(word.lower(), phon_dist + non_rhyme_penalty + syll_pen - last_let_disc ))
+#     for word in words_set:
+#         phon_dist = phonetic_distance( word, w_record.word)
+#         if (phon_dist <= thresh) and (word != w_record.word):
+#             syll_pen = 0 #syllable_penalty( word, w_record.word)
+#             last_let_disc = 0 #last_letter_discount(word, w_record.word)
+#             close_word_list.append( Close_word(word.lower(), phon_dist + non_rhyme_penalty + syll_pen - last_let_disc ))
 
 
-    rhyme_word_list = get_sized_rhymes( w_record.word, syllable_count_dict )[0]
+    rhyme_word_list = get_sized_rhymes( w_record.word )[0]
 
     # Find words that are rhymes
     for word in rhyme_word_list:
-            syll_pen = syllable_penalty( word, w_record.word, syllable_count_dict)
-            last_let_disc = last_letter_discount(word, w_record.word)
+            syll_pen = 0 #syllable_penalty( word, w_record.word)
+            last_let_disc = 0 #last_letter_discount(word, w_record.word)
             close_word_list.append( Close_word(word, rhyme_dist + syll_pen - last_let_disc) )
 
 
@@ -669,22 +641,22 @@ def setup():
 
 def process_captioning_the_image( ):
 
-	cand_df_, image_topic_word_, phrase_dict_ = generate_the_caption()
+    cand_df_, image_topic_word_, phrase_dict_ = generate_the_caption()
 
 
-	cand_df_ = compute_candidate_caption_scores(cand_df_)
+    cand_df_ = compute_candidate_caption_scores(cand_df_)
 
-	best_captions_df = get_best_captions(cand_df_, phrase_dict_)
+    best_captions_df = get_best_captions(cand_df_, phrase_dict_)
 
-	best_captions_df, best_captions_list = process_best_captions_df_and_make_list(cand_df_, phrase_dict_)
+    best_captions_df, best_captions_list = process_best_captions_df_and_make_list(cand_df_, phrase_dict_)
 
-	img = mpimg.imread('data/temp.png')
+    img = mpimg.imread('data/temp.png')
 
-	make_image_with_caption( img, best_captions_list[0])
+    make_image_with_caption( img, best_captions_list[0])
 
-	display_df_ = get_display_df( best_captions_df )
+    display_df_ = get_display_df( best_captions_df )
 
-	return display_df_
+    return display_df_
 
 
 

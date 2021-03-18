@@ -2,34 +2,34 @@
 # coding: utf-8
 
 # ## 1 — Recognize objects in image (or classify image)
-#
-# Using trained NN, get object label or labels for image, or otherwise provide a label for the image. Also store the centrality of the object.
+# 
+# Using trained NN, get object label or labels for image, or otherwise provide a label for the image. Also store the centrality of the object. 
 
 # ## 2  — Generate semantic word families
-#
+# 
 # For each label, use Word2Vec `similar` to retrieve list of words semantically related to the image object labels
 
 # ## 3 — Generate all related words
-#
+# 
 # For each semantically related (below a distance threshold) word to each object label, measure its phonetic similarity to all words in the dictionary. Also store each words's distance.
-#
+# 
 # For each word in each semantic family, sort and choose the phonetically closest (below a distance threshold) words.
 # (One way is to convert the word to IPA and compare to an IPA converted version of every word in the CMU dictionary.)
 
 # ## 4 — Gather candidate phrases
-#
+# 
 # For each word in the phonetic family, of each word in the semantic family, of each object label, retrieve each idiom containing the word.
 # Add the idiom Id, as well as the stats on the object centrality, semantic distance, and phonetic distance, to a dataframe.
-#
+# 
 # Compute _suitability score_ for each word-idiom match and add this to that column of the dataframe
-#
+# 
 # Also, for each word in the semantic family, search the joke list for match and add that these to a joke_match dataframe, to use if there's too low a suitability score using a substitution.
-#
+# 
 
 # ## 5 — Choose captions
-#
+# 
 # Sort captions dataframe by the _suitability score_
-#
+# 
 # Choose the top 10 and generate a list containing each caption with the original semantic family word substituted into the idiom in addition to jokes containing any of the semantic family words
 
 
@@ -58,7 +58,7 @@ import uuid
 
 
 # ## -1  — Webscrape and process phrases (idioms, sayings, aphorisms)
-#
+# 
 # They should be converted into lists of phonetic sounds
 
 # ## 0  — Load `phrase_dict` pickled and processed after being scraped
@@ -122,31 +122,31 @@ def seed_the_phrase_dictionary_with_examples(phrase_dict_ ):
 
 
 
-# change this so that it imports into a pandas dataframe, so that we can import conversational
+# change this so that it imports into a pandas dataframe, so that we can import conversational 
 # prefixes and suffixes manually editied in Excel
 
 import csv
 
 def compile_idiom_lists():
     idiom_list_ = []
-    with open('data/idioms_1500.csv', 'r') as idioms_data:
+    with open('data/idioms_1500.csv', 'r') as idioms_data: 
         for line in csv.reader(idioms_data):
             idiom_list_.extend(line)
     idiom_list_ = idiom_list_[1:]
     return idiom_list_
-
+    
 #idiom_list = compile_idiom_lists()
 
 
 
 
 import pickle
-
+   
 
 
 # ## 1 — Recognize objects in image (or classify image)
-#
-# Using trained NN, get object label or labels for image, or otherwise provide a label for the image. Also store the centrality of the object.
+# 
+# Using trained NN, get object label or labels for image, or otherwise provide a label for the image. Also store the centrality of the object. 
 
 
 
@@ -172,10 +172,10 @@ def get_image_category_labels():  # is this function even necessary?
     response=requests.get('https://storage.googleapis.com/download.tensorflow.org/data/imagenet_class_index.json')
     imgnet_map=response.json()
     imgnet_map   # {'0': ['n01440764', 'tench'],   '1': ['n01443537', 'goldfish'], etc.
-
+    
     imgnet_label_from_num = {k:v[1] for k, v in imgnet_map.items()}
 
-    return ( imgnet_num_from_label, imgnet_label_from_num )
+    return ( imgnet_num_from_label, imgnet_label_from_num ) 
 
 #model = prepare_image_classification_model()
 
@@ -185,15 +185,15 @@ def get_image_category_labels():  # is this function even necessary?
 import re
 import csv
 
-def get_curated_img_label_dict():
+def get_curated_img_label_dict():    
     img_label_dict = {}
 
-    with open('data/image_net_labels_with_original_index_numbers.txt', newline = '') as labels:
+    with open('data/image_net_labels_with_original_index_numbers.txt', newline = '') as labels:                                                                                          
         label_reader = csv.reader(labels, delimiter=' ')
         for label_row in label_reader:
             img_label_dict[label_row[0]] = label_row[2]
-            #img_label_dict
-
+            #img_label_dict        
+             
 
 #     filepath = 'data/imagenet1000_clsidx_to_labels.txt'
 #     with open(filepath) as fp:
@@ -237,10 +237,10 @@ def get_image_path(img_num):
     path_prefix = 'data/ILSVRC/Data/DET/test/'
     filename_stem ='ILSVRC2017_test_0000'
     filename_suffix = '.JPEG'
-    #file_number = rand_num = np.random.randint(1, 5500)
+    #file_number = rand_num = np.random.randint(1, 5500)   
     IMAGE_PATH_ = path_prefix + filename_stem + get_num_str( img_num ) + filename_suffix
     return IMAGE_PATH_
-
+    
 def preprocess_image( IMAGE_PATH_ ):
     img_ =tf.keras.preprocessing.image.load_img(IMAGE_PATH_, target_size=(299, 299))
     img_ =tf.keras.preprocessing.image.img_to_array(img_)
@@ -268,9 +268,9 @@ def extract_best_prediction(img_label_dict_, prediction_array_ ):
     best_prediction_str = img_label_dict_[ prediction_decoded[0][0][0] ]
     #print(best_prediction_str)
     return best_prediction_str
-#
+#    
 
-
+    
 
 
 
@@ -294,7 +294,7 @@ def image_recognition_pipeline( model_,  img_label_dict_, img_num = np.random.ra
     image_topics_  = extract_best_prediction( img_label_dict_, prediction_array )
     with open("data/" + "image_topics.pickle", 'wb') as to_write:
         pickle.dump([image_topics_], to_write)
-
+      
     return  img, [image_topics_]
 
 #image_recognition_pipeline(model, img_label_dict )
@@ -310,7 +310,7 @@ def image_recognition_pipeline( model_,  img_label_dict_, img_num = np.random.ra
 
 
 # ## 2 — Generate semantic word families
-#
+# 
 # For each label, use Word2Vec `similar` to retrieve list of words semantically related to the image object labels
 
 
@@ -326,7 +326,7 @@ def get_synonyms( w ):
     #syn_list.extend([word.split('.')[0] for object_name in [syn.name().split('_') for syn in wordnet.synsets( w )[0].lemmas() ] for word in object_name])
     #syn_list=[word for object_name in [syn.name().split('_') for syn in wordnet.synsets( w )[0].hypernyms()[0].hyponyms() ] for word in object_name]
     #syn_list.extend([word for object_name in [syn.name().split('_') for syn in wordnet.synsets( w )[0].root_hypernyms()] for word in object_name])
-
+ 
     return syn_list
 
 
@@ -341,9 +341,9 @@ def get_synonyms( w ):
 
 
 # ## 3 — Generate all related words
-#
+# 
 # For each semantically related (below a distance threshold) word to each object label, measure its phonetic similarity to all words in the dictionary. Also store each words's distance.
-#
+# 
 # For each word in each semantic family, sort and choose the phonetically closest (below a distance threshold) words.
 # (One way is to convert the word to IPA and compare to an IPA converted version of every word in the CMU dictionary.)
 
@@ -358,10 +358,32 @@ words_set = set( words.words())
 
 import eng_to_ipa as ipa
 import pronouncing as pron
+import syllables
 
-def syllable_count_diff( w1, w2, syllable_count_dict_ ):
-    if w2 not in words_set:
-        syllable_count_dict_[w2] = ipa.syllable_count( w2 )
+def syllable_count_diff( w1, w2, syllable_count_dict_ ): 
+    if w2 not in syllable_count_dict_.keys():
+        try:
+            syllable_count_dict_[w2] = syllables.estimate(w2)
+        except:
+            try:
+                syllable_count_dict_[w2] = ipa.syllable_count(w2)
+            except:
+                try:
+                    syllable_count_dict_[w2] = pron.syllablle_count(pron.get_phones_for_word( w2 )[0])
+                except:
+                    return 0
+    if w1 not in syllable_count_dict_.keys():
+        try:
+            syllable_count_dict_[w1] = syllables.estimate(w1)
+        except:
+            try:
+                syllable_count_dict_[w1] = ipa.syllable_count(w1)
+            except:
+                try:
+                    syllable_count_dict_[w1] = pron.syllablle_count(pron.get_phones_for_word( w1 )[0])
+                except:
+                    return 0   
+
     return abs( syllable_count_dict_[ w1 ] - syllable_count_dict_[ w2 ])
     #return pron.syllable
 
@@ -370,6 +392,11 @@ def same_syllable_count( w1, w2, syllable_count_dict_  ):
 
 def close_syllable_count( w1, w2, syllable_count_dict_, threshold=2):
     return syllable_count_diff( w1, w2, syllable_count_dict_ ) <= threshold
+
+
+
+
+#pron.syllable_count(pron.phones_for_word("delinquent")[0])
 
 
 
@@ -387,7 +414,7 @@ def get_sized_rhymes( w, syllable_count_dict_ ):
     return [ [rhyme for rhyme  in rhyme_list if close_syllable_count( w, rhyme, syllable_count_dict_, 1) and len(rhyme) >= word_length_min ]]
     #return [ [rhyme for rhyme  in rhyme_list if close_syllable_count( w, rhyme, syllable_count_dict_, 1) and len(rhyme) >= word_length_min and rhyme in words_set]]
     #return [ [rhyme for rhyme  in rhyme_list if len(rhyme) >= word_length_min and rhyme in words_set]]
-
+ 
 
 
 
@@ -410,7 +437,7 @@ dmeta = fuzzy.DMetaphone()
 
 
 
-
+import eng_to_ipa as ipa
 
 
 def syllable_penalty(w1, w2, syllable_count_dict_, penalty_factor = 0.2):
@@ -442,7 +469,7 @@ def phonetic_distance(w1, w2, fuzzy_meta_dict_, fuzzy_nysiis_dict_):
     if w2 not in words_set:
         fuzzy_nysiis_dict_[w2] = fuzzy.nysiis(w2)
         fuzzy_meta_dict_[w2] = dmeta(w2)[0]
-
+        
     nysiis_dist = lev.distance( fuzzy_nysiis_dict_[w1],fuzzy_nysiis_dict_[w2])
     num_of_measures +=1
     sum_of_measures+= nysiis_dist
@@ -454,14 +481,14 @@ def phonetic_distance(w1, w2, fuzzy_meta_dict_, fuzzy_nysiis_dict_):
     except:
         pass
     try:
-        pron_dist = round(lev.distance( pron.phones_for_word(w1)[0], pron.phones_for_word(w2)[0]) /3.5)
+        pron_dist = round(lev.distance( pron.phones_for_word(w1)[0], pron.phones_for_word(w2)[0]) /3.5)  
         num_of_measures +=1
         sum_of_measures+= pron_dist
     except:
         pass
     return sum_of_measures/float(num_of_measures)
     # return np.mean( nysiis_dist, pron_dist )
-
+   
 
 
 
@@ -505,22 +532,22 @@ def make_phon_fam_for_sem_fam_member( w_record, thresh=3 ):
         fuzzy_nysiis_dict =  pickle.load(to_read)
     with open("data/" + "syllable_count_dictionary.pickle", 'rb') as to_read:
         syllable_count_dict =  pickle.load(to_read)
-
-
+        
+    
     w_phon_code = w_record.word # To be replaced with phonetic version if needed
     close_word_list = []
     rhyme_dist = .3
     non_rhyme_penalty = rhyme_dist + .3
-
+    
     # Find words that are not necessarily rhyms but phonetically similar
 
     rhyme_word_list = get_sized_rhymes( w_record.word, syllable_count_dict )[0]
     rhyme_bounty = len( rhyme_word_list )
-    #print('length of rhyme list', rhyme_bounty )
-
-
+    #print('length of rhyme list', rhyme_bounty )    
+    
+    
     for word in words_set:
-        phon_dist = phonetic_distance( word, w_record.word, fuzzy_meta_dict, fuzzy_nysiis_dict)
+        phon_dist = phonetic_distance( word, w_record.word, fuzzy_meta_dict, fuzzy_nysiis_dict) 
         if (phon_dist <= thresh) and (word != w_record.word):
             syll_pen = syllable_penalty( word, w_record.word, syllable_count_dict)
             last_let_disc = last_letter_discount(word, w_record.word)
@@ -528,10 +555,10 @@ def make_phon_fam_for_sem_fam_member( w_record, thresh=3 ):
             close_word_list.append( Close_word(word.lower(), phon_dist + non_rhyme_penalty + syll_pen - last_let_disc - first_letter_disc ))
         #if len( close_word_list ) > 100:
         #   break
-    #print(len( close_word_list))
+    #print(len( close_word_list))       
 
 
-
+    
     # Find words that are rhymes
     for word in rhyme_word_list:
             syll_pen = syllable_penalty( word, w_record.word, syllable_count_dict)
@@ -539,12 +566,12 @@ def make_phon_fam_for_sem_fam_member( w_record, thresh=3 ):
             close_word_list.append( Close_word(word, rhyme_dist + syll_pen - last_let_disc - first_letter_disc) )
             first_letter_disc = first_letter_discount(word, w_record.word)
             #logger.info('word in rhyme_list: ', word)
-
-    #print(len( close_word_list))
+            
+    #print(len( close_word_list))           
     #logger.info('returning a phonic family: ')
     return Phon_family(locus_word = w_record, close_words=close_word_list )
-
-
+    
+    
 
 #with open("data/" + "syllable_count_dictionary.pickle", 'rb') as to_read:
 #    syllable_count_dict =  pickle.load(to_read)#get_sized_rhymes('entertainment', syllable_count_dict)#syllable_count_diff('entertainment', 'arraignment', syllable_count_dict)#pron.syllable_count(pron.phones_for_word('liason')[0])#len(syllable_count_dict)#ipa.get_rhymes('entertainment')
@@ -560,49 +587,49 @@ def make_phon_fam_for_sem_fam_member( w_record, thresh=3 ):
 
 
 # To be replaced or enhanced with Word2Vec `most_similar()`
-def get_most_similar( w ):
+def get_most_similar( w ):  
     synonym_dist_setting = .5
     #list_of_duples = [(syn, synonym_dist_setting) for syn in get_synonyms( w ) if syn !=  w.split('_')[0] else (syn, synonym_dist_setting-.5)]
     list_of_duples = [(syn, synonym_dist_setting) for syn in get_synonyms( w ) ]
     # Replace the above line with a for loop that takes into account the if w has an underscore, it's first
     # item could be in the syn list and be more related than the the 1 penalty suggests
-
+    
     if(w == 'two'):
         additional_words =  [('pair', .95), ('twice', .90)]
         list_of_duples.extend( additional_words )
     list_of_close_words = [Close_word( word=w_str, distance= w_sim) for w_str, w_sim in list_of_duples ]
-    #print("list of semantically close words: ", list_of_close_words)
+    #print("list of semantically close words: ", list_of_close_words)    
     return list_of_close_words
 
 
 
 
 def make_phon_fams_and_sem_family( w ):
-
-    if '_' not in w:
+    
+    if '_' not in w:       
         word_record_ = Close_word(w, 0.0)
     else:
         word_record_ = Close_word(w.split('_')[-1], 0.1)
-
+   
     #phon_fams_word_set = set()
     #phon_fams_word_set.add( word_record )
-
+ 
     phon_fams_list = []
     phon_fams_list.append( make_phon_fam_for_sem_fam_member( word_record_ ) )
-
+  
     sem_sim_words = get_most_similar( w )  # Eventually replace with call to Word2Vec
 
     #phon_fams_word_set = phon_fams_word_set.union( sem_sim_words )
-
+    
     for close_w_record in sem_sim_words:
         #print( close_w_record )
         if( len(close_w_record.word ) >=2 ):
             phon_fams_list.append( make_phon_fam_for_sem_fam_member( close_w_record ) )
-
+        
     #print('phon_fams_list length: ', len(phon_fams_list))
-
+    
     return Sem_family(locus_word= word_record_, sem_fam_words = phon_fams_list)
-
+   
 
 
 
@@ -611,23 +638,23 @@ def make_phon_fams_and_sem_family( w ):
 
 
 # ## 4 — Gather candidate phrases
-#
+# 
 # For each word in the phonetic family, of each word in the semantic family, of each object label, retrieve phrases containing the word.
 # Add the phrase_Id, as well as the stats on the object centrality, semantic distance, and phonetic distance, to a dataframe.
-#
+# 
 # Compute _suitability score_ for each word-phrase match and add this to that column of the dataframe
-#
+# 
 # Also, for each word in the semantic family, search the joke list for match and add that these to a joke_match dataframe, to use if there's too low a suitability score using a substitution.
-#
+# 
 
 # ## TO CODE NEXT
-#
-# Write code that takes the word `twice` and returns its `semantic_family` which is a list of words
-# ('pair', and 'twice' in this case) and returns either (TBD) the list phonetically similar words or
+# 
+# Write code that takes the word `twice` and returns its `semantic_family` which is a list of words 
+# ('pair', and 'twice' in this case) and returns either (TBD) the list phonetically similar words or 
 # the pboneticized version of the word to be compared with the phoneticized variants of words in
 # the phrases
-#
-#
+# 
+# 
 
 # #### Define dataframe for candidate phrases
 
@@ -654,19 +681,25 @@ def phoneticized( w ):
 
 
 
-def get_matching_phrases( w, phrase_dict_ ):
-    matched_id_list = []
-    for phrase_id, phrase in phrase_dict_.items():
-         if w in phrase.phon_list:
-            matched_id_list.append(phrase_id)
-            #print( phrase_dict_[ phrase_id] )
-            return matched_id_list
+def get_matching_phrases( w, phrase_dict_, word_to_phrase_dict_  ):
+    try:
+        return word_to_phrase_dict_[w]    
+    except:
+        return None
+    
+#     matched_id_list = []
+#     for phrase_id, phrase in phrase_dict_.items():
+#          if w in phrase.phon_list:
+#             matched_id_list.append(phrase_id)
+#             #print( phrase_dict_[ phrase_id] )
+#             return matched_id_list
+
+
 
 
 import streamlit as st
 #  cycles through each phonetic family in the semantic family to get matching phrases
-status_text = ""
-def get_phrases_for_phon_fam( phon_fam_, phrase_dict_ ):
+def get_phrases_for_phon_fam( phon_fam_, phrase_dict_, word_to_phrase_dict_ ):
     bar = st.progress(0)
     word_match_records_ = []
     outer_count = 0
@@ -676,15 +709,19 @@ def get_phrases_for_phon_fam( phon_fam_, phrase_dict_ ):
     status_text = "Exploring potential captions"
     count = 0
     for word in phon_fam_.close_words:
-
-
-        matched_phrases = get_matching_phrases( word.word, phrase_dict_ )
+        # TIMEING THIS CODE
+        #start = time.time()
+        matched_phrases = get_matching_phrases( word.word, phrase_dict_, word_to_phrase_dict_ )
         if matched_phrases:
             for p_id in matched_phrases:
                 word_match_records_.append({'semantic_match': phon_fam_.locus_word.word, 'sem_dist': phon_fam_.locus_word.distance, 'phonetic_match': word.word, 'phon_dist': word.distance, 'phrase_id': p_id, 'dist_score': ''})
+        #end = time.time()
+        #st.write("Time consumed in working on : ", word,  end - start)
+        #print("Time consumed in working : ", word,   end - start) 
+        # END THE TIMING HERE
         count+=1
         #bar.progress( min(100, int( 100 * 15 * float(count)/max)) )
-        bar.progress( min( 100, int(2* count/max) ))
+        bar.progress( min( 100, int(3* count/max) ))
         outer_count+=1
         more_mult = int(outer_count/30000)
         status_text = "Exploring more " + 'and more '* (more_mult - 1)+ "potential captions"
@@ -697,32 +734,29 @@ def get_phrases_for_phon_fam( phon_fam_, phrase_dict_ ):
 
 
 
-def get_phrases_for_sem_fam( sem_fam_, phrase_dict_ ):
+def get_phrases_for_sem_fam( sem_fam_, phrase_dict_, word_to_phrase_dict_ ):
     word_match_records_ = []
-
-
     for phon_fam_ in sem_fam_.sem_fam_words:
         #print( phon_fam_.locus_word.distance )
         #word_match_records_.extend( get_phrases_for_phon_fam( phon_fam_, sem_fam_.locus_word.distance ) )
-        phrases_, bar = get_phrases_for_phon_fam( phon_fam_, phrase_dict_ )
+        #phrases_ =      get_phrases_for_phon_fam( phon_fam_, phrase_dict_, word_to_phrase_dict_ ) 
+        phrases_, bar = get_phrases_for_phon_fam( phon_fam_, phrase_dict_, word_to_phrase_dict_ )
         bar = st.empty()
         if len( phrases_ ) > 0:
             #print( phrases_ )
             word_match_records_.extend( phrases_ )
         #if len(word_match_records_) > 500:
         #   break
-
-    status_text = ''
     #print("SEM fam's number of word_match_records:", len(word_match_records_ ))
     return word_match_records_
 
 
 
 
-# word_match_records = []
-# word_match_records.extend( get_phrases_for_phon_fam( two_phon_fam ) )
+# word_match_records = []   
+# word_match_records.extend( get_phrases_for_phon_fam( two_phon_fam ) ) 
 # word_match_records.extend( get_phrases_for_phon_fam( pair_phon_fam ) )
-# word_match_records.extend( get_phrases_for_phon_fam( twice_phon_fam ) )
+# word_match_records.extend( get_phrases_for_phon_fam( twice_phon_fam ) )  
 # word_match_records
 
 
@@ -744,7 +778,7 @@ def get_image_topics():
 #     image_topics_ =  pickle.load(to_read)
 
 # with open("data/" + "phrase_dictionary.pickle", 'rb') as to_read:
-#     phrase_dict_ =  pickle.load(to_read)
+#     phrase_dict_ =  pickle.load(to_read)    
 
 # col_names = ['semantic_match', 'sem_dist', 'phonetic_match', 'phon_dist', 'phrase_id', 'dist_score']
 # cand_df_ = pd.DataFrame(columns= col_names)
@@ -774,12 +808,13 @@ def get_image_topics():
 
 
 
-
+import time
 
 
 
 
 #image_topics_
+import streamlit as st
 
 
 
@@ -788,10 +823,13 @@ def get_image_topics():
 def generate_the_captions( ):
     with open("data/" + "image_topics.pickle", 'rb') as to_read:
         image_topics_ =  pickle.load(to_read)
-
+        
     with open("data/" + "phrase_dictionary.pickle", 'rb') as to_read:
-        phrase_dict_ =  pickle.load(to_read)
+        phrase_dict_ =  pickle.load(to_read)    
 
+    with open("data/" + 'word_to_phrase_dict.pickle', 'rb') as to_read:  
+        word_to_phrase_dict_  =  pickle.load(to_read)       
+        
     col_names = ['semantic_match', 'sem_dist', 'phonetic_match', 'phon_dist', 'phrase_id', 'dist_score']
     cand_df_ = pd.DataFrame(columns= col_names)
 
@@ -799,13 +837,28 @@ def generate_the_captions( ):
 #   image_topic_word_ = image_topics_
     image_sem_fam = make_phon_fams_and_sem_family( image_topic_word_ )
 
-    word_match_records = get_phrases_for_sem_fam( image_sem_fam, phrase_dict_ )
-
+    #start = time.time()
+    word_match_records = get_phrases_for_sem_fam( image_sem_fam, phrase_dict_, word_to_phrase_dict_  )
+    #end = time.time()
+    #st.write("Time consumed in working: ",end - start)
+    #print("Time consumed in working: ",end - start)
+        
     cand_df_ = cand_df_.append(word_match_records)
     return cand_df_, image_topic_word_, phrase_dict_
+    #return
 
 #generate_the_captions( )
 #cand_df_, image_topic_word_, phrase_dict_= generate_the_captions( )
+
+
+
+
+
+
+
+
+
+#phrase_dict_
 
 
 
@@ -821,9 +874,9 @@ def compute_candidate_caption_scores(cand_df_):
 
 
 # ## 5 —  Choose captions
-#
+# 
 # Sort captions dataframe by the _suitability score_
-#
+# 
 # Choose the top 10(?) and generate a list containing each caption with the original semantic family word substituted into the idiom in addition to jokes containing any of the semantic family words
 
 
@@ -903,7 +956,7 @@ img = mpimg.imread('data/temp.png')
 def make_image_with_caption( image, caption):
     ax = plt.subplot(1, 1, 1)
     plt.axis('off')
-    plt.text( 0.5, -0.1, caption,     horizontalalignment='center', verticalalignment='center',     transform=ax.transAxes, fontsize=16)
+    plt.text( 0.5, -0.1, caption.capitalize(),     horizontalalignment='center', verticalalignment='center',     transform=ax.transAxes, fontsize=16)
     plt.imshow( image)
 
     plt.tight_layout()
@@ -920,8 +973,36 @@ def build_phrase_dictionary(idiom_list_, phrase_dict_):
         w_list = idiom_str.lower().split()
         phrase_dict_[uuid.uuid1()] = Phrase(text_string = idiom_str, word_list = w_list, phon_list = w_list, string_length = len(idiom_str), word_count = len(w_list), prefix="Yeah, right, like  ", phrase_type='idiom' )
 
+           
     with open("data/" + "phrase_dictionary.pickle", 'wb') as to_write:
-        pickle.dump(phrase_dict_, to_write)
+        pickle.dump(phrase_dict_, to_write)     
+
+        
+    # Make backwards dictionary: word_to_phrase    
+    phrase_words_set = set()
+    
+    for k, v in phrase_dict_.items():
+        phrase_words_set = phrase_words_set.union( set(v.word_list) ) 
+
+    word_to_phrase_dict = dict()
+
+    for word in phrase_words_set:
+        phrase_id_list = []
+        for k, v in phrase_dict_.items():
+            if word in v.word_list:
+                phrase_id_list.append( k )
+            word_to_phrase_dict[word] = phrase_id_list       
+
+    with open("data/" + "word_to_phrase_dict.pickle", 'wb') as to_write:
+        pickle.dump(word_to_phrase_dict, to_write)     
+
+   
+        
+
+
+
+
+
 
 
 
@@ -933,8 +1014,10 @@ def setup():
     seed_the_phrase_dictionary_with_examples( phrase_dict )
 
     idiom_list_ = compile_idiom_lists()
-
+    
     build_phrase_dictionary(idiom_list_, phrase_dict )
+    
+#setup()
 
 
 
@@ -945,7 +1028,7 @@ def setup():
 
 #def process_captioning_the_image_part1( ):
 def process_captioning_the_image_part1( cand_df_, image_topic_word_, phrase_dict_ ):
-
+    
     #cand_df_, image_topic_word_, phrase_dict_ = generate_the_captions()
 
     cand_df_ = compute_candidate_caption_scores(cand_df_)
@@ -953,9 +1036,9 @@ def process_captioning_the_image_part1( cand_df_, image_topic_word_, phrase_dict
     best_captions_df_ = get_best_captions(cand_df_, phrase_dict_)
 
     return cand_df_, best_captions_df_, phrase_dict_
-
-def process_captioning_the_image_part2( cand_df_, best_captions_, phrase_dict_ ):
-
+    
+def process_captioning_the_image_part2( cand_df_, best_captions_, phrase_dict_ ):   
+    
     best_captions_df_, best_captions_list_ = process_best_captions_df_and_make_list(cand_df_, phrase_dict_)
 
     img_ = mpimg.imread('data/temp.png')
@@ -1073,10 +1156,10 @@ img_model = load_image_classification_model()
 
 
 
-############# img_num=3300
+#img_num=2930
 if img_num is None:
     img_num = 2
-
+    
 img, image_topics_list =image_recognition_pipeline(img_model, img_label_dict, img_num )
 
 
@@ -1091,13 +1174,19 @@ img, image_topics_list =image_recognition_pipeline(img_model, img_label_dict, im
 #display_df = process_captioning_the_image()
 
 #cand_df, image_topic_word, phrase_dict = generate_the_captions()
-with st.spinner('Hmmm, let me think...'):
-    cand_df, image_topic_word, phrase_dict = generate_the_captions()
+cand_df, image_topic_word, phrase_dict = generate_the_captions()
 
 
 
 
+#cand_df
 
+
+
+
+# with open("data/" + 'word_to_phrase_dict.pickle', 'rb') as to_read:  
+#     word_to_phrase_dict  =  pickle.load(to_read)      
+# word_to_phrase_dict['dispope']
 
 
 
@@ -1186,3 +1275,12 @@ if show_other_captions:
 
 
 #display_df
+
+
+
+
+
+
+
+
+

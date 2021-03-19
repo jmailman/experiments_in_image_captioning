@@ -447,7 +447,7 @@ def syllable_penalty(w1, w2, syllable_count_dict_, penalty_factor = 0.2):
 
 
 
-def first_letter_discount(w1, w2, discount_value = .6):
+def first_letter_discount(w1, w2, discount_value = .4):
     return discount_value if w1[0] == w2[0] else 0
 
 def last_letter_discount(w1, w2, discount_value = .25):

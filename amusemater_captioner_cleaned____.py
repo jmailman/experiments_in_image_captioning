@@ -67,7 +67,7 @@ import uuid
 
 # #### Data structures defined
 
-# In[10]:
+# In[251]:
 
 
 Phrase = namedtuple('Phrase',['text_string', 'word_list','phon_list','string_length', 'word_count', 'prefix', 'phrase_type'])
@@ -79,7 +79,7 @@ Phon_family = namedtuple('Phon_family', ['locus_word', 'close_words'])
 
 # #### Temporary toy example of the dict of phrases, to be replaced with idioms etc. scraped from web
 
-# In[11]:
+# In[252]:
 
 
 def seed_the_phrase_dictionary_with_examples(phrase_dict_ ):
@@ -124,7 +124,7 @@ def seed_the_phrase_dictionary_with_examples(phrase_dict_ ):
 #seed_the_phrase_dictionary_with_examples()
 
 
-# In[12]:
+# In[253]:
 
 
 # change this so that it imports into a pandas dataframe, so that we can import conversational 
@@ -143,7 +143,7 @@ def compile_idiom_lists():
 #idiom_list = compile_idiom_lists()
 
 
-# In[13]:
+# In[254]:
 
 
 import pickle
@@ -154,7 +154,7 @@ import pickle
 # 
 # Using trained NN, get object label or labels for image, or otherwise provide a label for the image. Also store the centrality of the object. 
 
-# In[14]:
+# In[255]:
 
 
 import numpy as np
@@ -167,7 +167,7 @@ from tensorflow.keras.applications.xception import decode_predictions
 #%matplotlib inline
 
 
-# In[15]:
+# In[256]:
 
 
 def load_image_classification_model():
@@ -189,7 +189,7 @@ def get_image_category_labels():  # is this function even necessary?
 #model = prepare_image_classification_model()
 
 
-# In[16]:
+# In[257]:
 
 
 import re
@@ -233,7 +233,7 @@ def get_curated_img_label_dict():
 
 
 
-# In[17]:
+# In[258]:
 
 
 def get_num_str( num, max_digits=4 ):
@@ -241,7 +241,7 @@ def get_num_str( num, max_digits=4 ):
     return '0'*leading_zeros + str(num)
 
 
-# In[18]:
+# In[259]:
 
 
 import random
@@ -286,19 +286,19 @@ def extract_best_prediction(img_label_dict_, prediction_array_ ):
     
 
 
-# In[19]:
+# In[260]:
 
 
 #!pwd
 
 
-# In[20]:
+# In[347]:
 
 
 import pickle
-import streamlit
+import streamlit as st
 
-#@st.cache
+#@st.cache(show_spinner=False)
 def image_recognition_pipeline( model_,  img_label_dict_, img_num = np.random.randint(1, 5500)):
     #model_ = prepare_image_classification_model()
     IMAGE_PATH = get_image_path( img_num )
@@ -319,17 +319,30 @@ def image_recognition_pipeline( model_,  img_label_dict_, img_num = np.random.ra
 # image_topics
 
 
-# In[ ]:
+# In[401]:
 
 
+import gensim
+from gensim.models import Word2Vec
 
+#@st.cache (show_spinner=False)
+def load_w2v_kv_model():
+    glove_file = glove_dir  = 'data/glove.6B/glove.6B.100d.txt'
+
+    w2v_output_file = 'data/glove.6B/glove.6B.100d.txt.w2v'
+    gensim.scripts.glove2word2vec.glove2word2vec(glove_file, w2v_output_file)
+    # Now we can load it!
+    model = gensim.models.KeyedVectors.load_word2vec_format(w2v_output_file, binary=False)
+    return model
+
+#load_w2v_kv_model()
 
 
 # ## 2 — Generate semantic word families
 # 
 # For each label, use Word2Vec `similar` to retrieve list of words semantically related to the image object labels
 
-# In[21]:
+# In[263]:
 
 
 from nltk.corpus import wordnet
@@ -363,7 +376,7 @@ def get_synonyms( w ):
 
 
 
-# In[22]:
+# In[264]:
 
 
 #'bird.n.01'.split('.')[0]
@@ -376,7 +389,7 @@ def get_synonyms( w ):
 # For each word in each semantic family, sort and choose the phonetically closest (below a distance threshold) words.
 # (One way is to convert the word to IPA and compare to an IPA converted version of every word in the CMU dictionary.)
 
-# In[23]:
+# In[265]:
 
 
 from nltk.corpus import words
@@ -384,7 +397,7 @@ from nltk.corpus import words
 words_set = set( words.words())
 
 
-# In[24]:
+# In[266]:
 
 
 import eng_to_ipa as ipa
@@ -425,13 +438,13 @@ def close_syllable_count( w1, w2, syllable_count_dict_, threshold=2):
     return syllable_count_diff( w1, w2, syllable_count_dict_ ) <= threshold
 
 
-# In[25]:
+# In[267]:
 
 
 #pron.syllable_count(pron.phones_for_word("delinquent")[0])
 
 
-# In[26]:
+# In[268]:
 
 
 # Eventually will need to to filter for the word-frequency sweet-spot or at least for only Engllish words
@@ -450,7 +463,7 @@ def get_sized_rhymes( w, syllable_count_dict_ ):
  
 
 
-# In[27]:
+# In[269]:
 
 
 # pron.rhymes('studio')
@@ -459,7 +472,7 @@ def get_sized_rhymes( w, syllable_count_dict_ ):
 #syllable_count_dict_['studio'] = 3
 
 
-# In[28]:
+# In[270]:
 
 
 import fuzzy
@@ -470,7 +483,7 @@ import Levenshtein as lev
 dmeta = fuzzy.DMetaphone()
 
 
-# In[29]:
+# In[271]:
 
 
 import eng_to_ipa as ipa
@@ -481,7 +494,7 @@ def syllable_penalty(w1, w2, syllable_count_dict_, penalty_factor = 0.2):
     return syllable_count_diff( w1, w2, syllable_count_dict_ ) * penalty_factor
 
 
-# In[30]:
+# In[272]:
 
 
 def first_letter_discount(w1, w2, discount_value = .4):
@@ -491,7 +504,7 @@ def last_letter_discount(w1, w2, discount_value = .25):
     return discount_value if w1[-1] == w2[-1] else 0
 
 
-# In[31]:
+# In[273]:
 
 
 def phonetic_distance(w1, w2, fuzzy_meta_dict_, fuzzy_nysiis_dict_):
@@ -546,7 +559,7 @@ def phonetic_distance(w1, w2, fuzzy_meta_dict_, fuzzy_nysiis_dict_):
 
 
 
-# In[32]:
+# In[274]:
 
 
 #     with open("data/" + "fuzzy_meta_dictionary.pickle", 'rb') as to_read:
@@ -557,19 +570,19 @@ def phonetic_distance(w1, w2, fuzzy_meta_dict_, fuzzy_nysiis_dict_):
 #         syllable_count_dict =  pickle.load(to_read)
 
 
-# In[33]:
+# In[275]:
 
 
 #'sweatshirt' in words_set
 
 
-# In[34]:
+# In[276]:
 
 
 #syllable_count_dict['sweatshirt']
 
 
-# In[133]:
+# In[277]:
 
 
 from random import random
@@ -633,7 +646,7 @@ def make_phon_fam_for_sem_fam_member( w_record, thresh=3 ):
 #         pron.phones_for_word(word)[0]
 #     except:
 #         print( word )
-# In[36]:
+# In[278]:
 
 
 # To be replaced or enhanced with Word2Vec `most_similar()`
@@ -652,7 +665,7 @@ def get_most_similar( w ):
     return list_of_close_words
 
 
-# In[37]:
+# In[511]:
 
 
 
@@ -660,12 +673,14 @@ def get_most_similar( w ):
 #subtle = True #False
 
 
-def make_phon_fams_and_sem_family( w, nearby_words_dict_  ):
-
+def make_phon_fams_and_sem_family( raw_w, nearby_words_dict_  ):
+    w = raw_w.lower()
+    w_words = w.split('_')
+    
     if '_' not in w:
         word_record_ = Close_word(w, 0.0)
     else:
-        word_record_ = Close_word(w.split('_')[-1], 0.1)
+        word_record_ = Close_word( w_words[-1], 0.1)
 
     #phon_fams_word_set = set()
     #phon_fams_word_set.add( word_record )
@@ -679,11 +694,49 @@ def make_phon_fams_and_sem_family( w, nearby_words_dict_  ):
     if subtle and (word_record_.word in nearby_words_dict_.keys() ):
         print('sublety code reached')
 
-        for w in nearby_words_dict_[word_record_.word]:
-            near_word = Close_word(w, 0.15)
+        for w_ in nearby_words_dict_[word_record_.word]:
+            near_word = Close_word(w_, 0.15)
             phon_fams_list.append( make_phon_fam_for_sem_fam_member( near_word ) )
             #sem_sim_words.extend( get_most_similar(  word_record_.word  ) )
+            
+        # use w2vec words now
+        # if label_word_cat_dict[raw_w] is 'object':
+        #     for w_ in model_bow.most_similar(positive = [*w_words, 'walks'], negative=['man'], topn=4)         
+        #         near_word = Close_word(w_, 0.12)
+        #         phon_fams_list.append( make_phon_fam_for_sem_fam_member( near_word ) )
+        #     for w_ in model_skp.most_similar(positive = [*w_words, 'walks'], negative=['man'], topn=4)         
+        #         near_word = Close_word(w_, 0.12)
+        #         phon_fams_list.append( make_phon_fam_for_sem_fam_member( near_word ) )
+        # elif label_word_cat_dict[raw_w] is 'animal':
+        #     for w_ in model_bow.most_similar(positive = [*w_words, 'walks'], negative=['man'], topn=4)
+        #         if w_.endswith(('ing', 'ed', 's', 'e', 'er'))
+        #         near_word = Close_word(w_, 0.12)
+        #         phon_fams_list.append( make_phon_fam_for_sem_fam_member( near_word ) ) 
+        # else:  
+        #     for w_ in model_bow.most_similar(positive = [*w_words, 'walks'], negative=['man'], topn=4)         
+        #         near_word = Close_word(w_, 0.11)
+        #         phon_fams_list.append( make_phon_fam_for_sem_fam_member( near_word ) )
+        
+        
 
+        
+    if contrary:
+        if word_record_.word in w2v_kv_model.vocab:
+            print('word is in word2vec')
+            w2v_word_duples = w2v_kv_model.most_similar( word_record_.word, topn=5 )
+            w2v_word_duples = [(w, score) for w, score in w2v_word_duples if w != word_record_.word]
+            print(w2v_word_duples)
+            for w_duple in w2v_word_duples:
+                print(w_duple[0], 1-w_duple[1])
+                if (word_record_.word not in w_duple[0] and w_duple[0] not in word_record_.word):
+                    near_word = Close_word(w_duple[0], 1-w_duple[1])
+                    phon_fams_list.append( make_phon_fam_for_sem_fam_member( near_word ) )
+        else: 
+            for w_ in nearby_words_dict_[word_record_.word]:
+                near_word = Close_word(w_, 0.15)
+                phon_fams_list.append( make_phon_fam_for_sem_fam_member( near_word ) )
+
+            
     #phon_fams_word_set = phon_fams_word_set.union( sem_sim_words )
 
     for close_w_record in sem_sim_words:
@@ -696,16 +749,30 @@ def make_phon_fams_and_sem_family( w, nearby_words_dict_  ):
     return Sem_family(locus_word= word_record_, sem_fam_words = phon_fams_list)
 
 
-# In[38]:
+# In[510]:
+
+
+
+
+
+# In[280]:
 
 
 #make_phon_fams_and_sem_family( "china" )
 
 
-# In[ ]:
+# In[387]:
 
 
+# w=image_topic_word
+# word_record = Close_word(w.split('_')[-1], 0.1)
+# word_record.word in w2v_kv_model.vocab
 
+
+# In[388]:
+
+
+# word_record
 
 
 # ## 4 — Gather candidate phrases
@@ -731,7 +798,7 @@ def make_phon_fams_and_sem_family( w, nearby_words_dict_  ):
 
 # #### Need to write body of function that will convert to phoneticized version of word
 
-# In[39]:
+# In[281]:
 
 
 def phoneticized( w ):
@@ -740,7 +807,7 @@ def phoneticized( w ):
 
 # ### ALERT:  Instead, pre-generate a dictionary of phoneticized versions of the words in the list of idioms. Each phonetic word should map to a list of duples each of which is a phrase id and the corresponding word
 
-# In[40]:
+# In[282]:
 
 
 # def get_matching_phrases( w, phrase_dict_ ):
@@ -752,7 +819,7 @@ def phoneticized( w ):
 #             return matched_id_list
 
 
-# In[104]:
+# In[283]:
 
 
 def get_matching_phrases( w, phrase_dict_, word_to_phrase_dict_  ):
@@ -769,7 +836,7 @@ def get_matching_phrases( w, phrase_dict_, word_to_phrase_dict_  ):
 #             return matched_id_list
 
 
-# In[191]:
+# In[284]:
 
 
 import streamlit as st
@@ -814,7 +881,7 @@ def get_phrases_for_phon_fam( phon_fam_, phrase_dict_, word_to_phrase_dict_, bar
     return word_match_records_, bar
 
 
-# In[240]:
+# In[285]:
 
 
 # global variable
@@ -826,7 +893,7 @@ def get_phrases_for_sem_fam( sem_fam_, phrase_dict_, word_to_phrase_dict_,  bar_
     global progress_text
        
     for phon_fam_ in sem_fam_.sem_fam_words:
-        status_text.text( progress_text + ' potential captions')
+        status_text.text( progress_text + ' captioning possibilities')
         #print( phon_fam_.locus_word.distance )
         #word_match_records_.extend( get_phrases_for_phon_fam( phon_fam_, sem_fam_.locus_word.distance ) )
         #phrases_ =      get_phrases_for_phon_fam( phon_fam_, phrase_dict_, word_to_phrase_dict_ ) 
@@ -853,7 +920,7 @@ def get_phrases_for_sem_fam( sem_fam_, phrase_dict_, word_to_phrase_dict_,  bar_
     return word_match_records_
 
 
-# In[227]:
+# In[286]:
 
 
 # word_match_records = []   
@@ -863,7 +930,7 @@ def get_phrases_for_sem_fam( sem_fam_, phrase_dict_, word_to_phrase_dict_,  bar_
 # word_match_records
 
 
-# In[228]:
+# In[287]:
 
 
 # To be replaced with image recognition algorithms
@@ -871,13 +938,13 @@ def get_image_topics():
     return [image_topic]
 
 
-# In[236]:
+# In[ ]:
 
 
 
 
 
-# In[230]:
+# In[288]:
 
 
 # with open("data/" + "image_topics.pickle", 'rb') as to_read:
@@ -890,25 +957,25 @@ def get_image_topics():
 # cand_df_ = pd.DataFrame(columns= col_names)
 
 
-# In[231]:
+# In[289]:
 
 
 # image_sem_fam = make_phon_fams_and_sem_family( image_topics_[0] )
 
 
-# In[232]:
+# In[290]:
 
 
 # cand_df_
 
 
-# In[233]:
+# In[291]:
 
 
 # image_sem_fam[1]
 
 
-# In[113]:
+# In[292]:
 
 
 # get_image_topics()
@@ -916,20 +983,20 @@ def get_image_topics():
 
 # ## The equivalent of `main` for the time being, until two or more image topics are handled
 
-# In[114]:
+# In[293]:
 
 
 import time
 
 
-# In[115]:
+# In[294]:
 
 
 #image_topics_
 import streamlit as st
 
 
-# In[189]:
+# In[295]:
 
 
 
@@ -981,19 +1048,19 @@ def generate_the_captions( bar_ ):
 
 
 
-# In[117]:
+# In[296]:
 
 
 #phrase_dict_
 
 
-# In[118]:
+# In[297]:
 
 
 #cand_df_
 
 
-# In[119]:
+# In[298]:
 
 
 def compute_candidate_caption_scores(cand_df_):
@@ -1007,17 +1074,39 @@ def compute_candidate_caption_scores(cand_df_):
 # 
 # Choose the top 10(?) and generate a list containing each caption with the original semantic family word substituted into the idiom in addition to jokes containing any of the semantic family words
 
-# In[120]:
+# In[445]:
 
 
 def construct_caption_by_substitution(row_, phon_match, sem_match, phrase_dict_ ):
     #print (phrase_dict_[ row_['phrase_id'] ])
+    
+    
     original_phrase = phrase_dict_[ row_['phrase_id'] ].text_string
-    altered_phrase = original_phrase.replace(phon_match, sem_match).replace('_', ' ')
+    sub_word_or_phrase = sem_match
+
+    if contrary:
+        if sem_match[-1] !='s' :
+            if sem_match[0] not in {'a', 'e', 'i', 'o'}:
+                sub_word_or_phrase = 'not just a ' + sub_word_or_phrase
+            else:     
+                sub_word_or_phrase = 'not just an ' + sub_word_or_phrase
+        else:
+            sub_word_or_phrase = 'not just ' + sub_word_or_phrase    
+
+    altered_phrase = original_phrase.replace(phon_match, sub_word_or_phrase).replace('_', ' ')
+
+    
+#     original_phrase = phrase_dict_[ row_['phrase_id'] ].text_string
+#     altered_phrase = original_phrase.replace(phon_match, sem_match).replace('_', ' ')
+    #return altered_phrase
+
+    
+    
+    
     return altered_phrase
 
 
-# In[121]:
+# In[300]:
 
 
 
@@ -1028,7 +1117,13 @@ def get_best_captions(df, phrase_dict_, selection_size=25):
     return best_df
 
 
-# In[122]:
+# In[379]:
+
+
+
+
+
+# In[301]:
 
 
 def process_best_captions_df_and_make_list(cand_df, phrase_dict):
@@ -1045,7 +1140,7 @@ def process_best_captions_df_and_make_list(cand_df, phrase_dict):
 
 
 
-# In[123]:
+# In[302]:
 
 
 def get_display_df(best_captions_df_):
@@ -1055,14 +1150,14 @@ def get_display_df(best_captions_df_):
     return best_captions_display_df
 
 
-# In[124]:
+# In[303]:
 
 
 import matplotlib.image as mpimg
 img = mpimg.imread('data/temp.png')
 
 
-# In[125]:
+# In[304]:
 
 
 # ax = plt.axes([0,0,1,1], frameon=False)
@@ -1088,13 +1183,17 @@ img = mpimg.imread('data/temp.png')
 
 
 
-# In[126]:
+# In[503]:
 
 
 def make_image_with_caption( image, caption):
     ax = plt.subplot(1, 1, 1)
     plt.axis('off')
-    plt.text( 0.5, -0.1, caption.capitalize(),     horizontalalignment='center', verticalalignment='center',     transform=ax.transAxes, fontsize=15)
+    f_reduction = max((len(caption)-35), 0)/5
+    
+    f_size = 16-f_reduction
+
+    plt.text( 0.5, -0.1, caption.capitalize(),     horizontalalignment='center', verticalalignment='center',     transform=ax.transAxes, fontsize=f_size)
     plt.imshow( image)
 
     plt.tight_layout()
@@ -1102,7 +1201,7 @@ def make_image_with_caption( image, caption):
     plt.show()
 
 
-# In[127]:
+# In[306]:
 
 
 # THIS BLOCK WILL EVENTUALLY BE OMMITTED FROM THE APP CODE
@@ -1145,7 +1244,7 @@ def build_phrase_dictionary(idiom_list_, phrase_dict_):
 
 
 
-# In[65]:
+# In[307]:
 
 
 # THIS BLOCK WILL EVENTUALLY BE OMMITTED FROM THE APP CODE
@@ -1161,7 +1260,7 @@ def setup():
 #setup()
 
 
-# In[66]:
+# In[363]:
 
 
 #def process_captioning_the_image( ):
@@ -1203,25 +1302,26 @@ def process_captioning_the_image_part3( img_, best_captions_list_, best_captions
 #process_captioning_the_image( )
 
 
-# In[ ]:
+# In[391]:
 
 
+#cand_df = compute_candidate_caption_scores(cand_df)
+#best_captions_df = get_best_captions(cand_df, phrase_dict)
 
 
-
-# In[67]:
+# In[309]:
 
 
 #type(display_df.index.tolist())
 
 
-# In[68]:
+# In[310]:
 
 
 #make_image_with_caption( img, display_df.index[0] )
 
 
-# In[69]:
+# In[311]:
 
 
 # cand_df_, image_topic_word_, phrase_dict_ = generate_the_captions()
@@ -1248,19 +1348,19 @@ def process_captioning_the_image_part3( img_, best_captions_list_, best_captions
 
 
 
-# In[70]:
+# In[312]:
 
 
 # cand_df_, image_topic_word_, phrase_dict_ = generate_the_captions()
 
 
-# In[71]:
+# In[313]:
 
 
 # cand_df
 
 
-# In[72]:
+# In[403]:
 
 
 def display_image():
@@ -1301,51 +1401,70 @@ st.write(
 img_num = st.slider('Slide to select a picture from IMAGENET', 1, 5500)
 # ### non-streamlit code
 
-# In[73]:
+# In[404]:
 
 
 img_label_dict = get_curated_img_label_dict()
 img_model = load_image_classification_model()
+#w2v_kv_model = load_w2v_kv_model()
 
 # setup()
 
 
-# In[74]:
+# In[405]:
 
 
 import random
 #img_num=random.randint(1,5500)
 if img_num is None:
-    img_num = 2
+    img_num = 10
     
 img, image_topics_list =image_recognition_pipeline(img_model, img_label_dict, img_num )
 
 
-# In[75]:
+# In[406]:
 
 
 #image_topics_list
 
 
-# In[156]:
+# In[407]:
 
 
 # def get_progress_text():
 #     return progress_text
 
 broad = st.checkbox('Brandish this for broad', value=True)
-subtle = st.checkbox('Click me for subtlety', value=False)
+subtle = st.checkbox('Touch me for subtlety', value=False)
+contrary = st.checkbox('Click me for contrary craziness', value=False)
 
+if contrary:
+    broad = False
+    subtle = False
+    w2v_kv_model = load_w2v_kv_model()
+ 
+if broad or subtle:
+    contrary = False
 
 #if broad is None:
 #    broad = True
-# In[167]:
+# In[408]:
 
 
+# broad = True
+# subtle = False
+# contrary = False
 
 
+# In[430]:
 
-# In[218]:
+
+# broad = False
+# subtle = False
+# contrary = True
+
+
+# In[431]:
 
 
 #display_df = process_captioning_the_image(phrase_dict)
@@ -1362,19 +1481,19 @@ status_text.text('Done!')
 #st.balloons()
 
 
-# In[ ]:
+# In[432]:
 
 
 #!ls data
 
 
-# In[77]:
+# In[433]:
 
 
 #cand_df
 
 
-# In[78]:
+# In[434]:
 
 
 # with open("data/" + 'word_to_phrase_dict.pickle', 'rb') as to_read:  
@@ -1382,63 +1501,63 @@ status_text.text('Done!')
 # word_to_phrase_dict['dispope']
 
 
-# In[79]:
+# In[446]:
 
 
 
 cand_df, best_captions_df, phrase_dict = process_captioning_the_image_part1(cand_df, image_topic_word, phrase_dict)
 
 
-# In[80]:
+# In[447]:
 
 
 #best_captions_df
 
 
-# In[81]:
+# In[448]:
 
 
 #cand_df
 
 
-# In[82]:
+# In[449]:
 
 
 #phrase_dict['91df2c78-854a-11eb-a9e5-acde48001122']
 
 
-# In[83]:
+# In[450]:
 
 
 #cand_df[cand_df['semantic_match']=='window']
 
 
-# In[84]:
+# In[451]:
 
 
 #best_captions_df
 
 
-# In[85]:
+# In[452]:
 
 
 img, best_captions_list, best_captions_df = process_captioning_the_image_part2(cand_df, best_captions_df, phrase_dict )
 
 
-# In[86]:
+# In[453]:
 
 
 #best_captions_df
 
 
-# In[87]:
+# In[454]:
 
 
 
 display_df = process_captioning_the_image_part3( img, best_captions_list, best_captions_df)
 
 
-# In[88]:
+# In[333]:
 
 
 #image_topic_word
@@ -1450,7 +1569,7 @@ display_df = process_captioning_the_image_part3( img, best_captions_list, best_c
 
 
 
-# In[89]:
+# In[334]:
 
 
 display_image()
@@ -1491,6 +1610,6 @@ if show_other_captions:
 
 
 
-# In[241]:
+# In[456]:
 
 

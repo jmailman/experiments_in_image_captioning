@@ -34,6 +34,24 @@
 
 
 
+# """
+# In jupyter notebook simple logging to console
+# """
+# import logging
+# import sys
+
+# logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+
+# # Test
+# logger = logging.getLogger('LOGGER_NAME')
+
+# logger.debug('This is hidden')
+# logger.info('So this is shown on the console')
+# logger.warning('This too')
+
+
+
+
 import pandas as pd
 from collections import namedtuple
 import uuid
@@ -143,7 +161,7 @@ from tensorflow.keras.applications.xception import decode_predictions
 
 
 
-def prepare_image_classification_model():
+def load_image_classification_model():
     model_ = tf.keras.applications.xception.Xception(weights = 'imagenet', include_top=True)
     return model_
 
@@ -157,6 +175,50 @@ def get_image_category_labels():  # is this function even necessary?
     imgnet_label_from_num = {k:v[1] for k, v in imgnet_map.items()}
 
     return ( imgnet_num_from_label, imgnet_label_from_num )
+
+#model = prepare_image_classification_model()
+
+
+
+
+import re
+import csv
+
+def get_curated_img_label_dict():
+    img_label_dict = {}
+
+    with open('data/image_net_labels_with_original_index_numbers.txt', newline = '') as labels:
+        label_reader = csv.reader(labels, delimiter=' ')
+        for label_row in label_reader:
+            img_label_dict[label_row[0]] = label_row[2]
+            img_label_dict
+
+
+#     filepath = 'data/imagenet1000_clsidx_to_labels.txt'
+#     with open(filepath) as fp:
+#         line = fp.readline()
+#         cnt = 0
+#         pattern = re.compile('([^\s\w]|_)+')
+#         while line:
+#             cleaner_line = re.sub(r'^"', '', line, flags=re.I)
+#             cleaner_line = re.sub(r'^\"{', '', line, flags=re.I)
+#             cleaner_line = re.sub(r'"$', '', cleaner_line, flags=re.I)
+#             # cleaner_line = re.sub(r'}$', '', cleaner_line, flags=re.I)
+#             label_string = cleaner_line.split(':')[1]
+#             stripped_string = pattern.sub('', label_string)
+#             stripped_string_list = stripped_string.split()
+#             img_label_dict[cnt] = stripped_string_list
+#             line=fp.readline()
+#             cnt+=1
+
+    return img_label_dict
+
+#img_label_dict = get_curated_img_label_dict()
+
+
+
+
+
 
 
 
@@ -198,31 +260,52 @@ def process_and_classify_image( img_, model_):
     prediction_array = model_.predict(np.array([img_]))
     return prediction_array
 
-def extract_best_prediction( prediction_array_ ):
-    prediction_decoded = decode_predictions(prediction_array_, top=5)
-    print( prediction_decoded )
-    best_prediction_str = prediction_decoded[0][0][1]
+def extract_best_prediction(img_label_dict_, prediction_array_ ):
+    prediction_decoded = decode_predictions(prediction_array_, top=1)
+    #print( prediction_decoded[0][0][0] )
+#   best_prediction_str = prediction_decoded[0][0][1]
+    best_prediction_str = img_label_dict_[ prediction_decoded[0][0][0] ]
+    print(best_prediction_str)
     return best_prediction_str
+#
 
 
 
 
 
 
+#!pwd
+
+
+
+
+import pickle
 import streamlit
 
 #@st.cache
-def image_recognition_pipeline( img_num = np.random.randint(1, 5500)):
-    model = prepare_image_classification_model()
+def image_recognition_pipeline( model_,  img_label_dict_, img_num = np.random.randint(1, 5500)):
+    #model_ = prepare_image_classification_model()
     IMAGE_PATH = get_image_path( img_num )
     img = preprocess_image( IMAGE_PATH )
-    prediction_array = process_and_classify_image( img, model)
-    image_topic_ = extract_best_prediction( prediction_array )
-    image_topics_ = [image_topic_]
+    prediction_array = process_and_classify_image( img, model_)
+    # image_topic_ = extract_best_prediction( img_label_dict_, prediction_array )
+    # image_topics_ = [image_topic_]
+    image_topics_  = extract_best_prediction( img_label_dict_, prediction_array )
     with open("data/" + "image_topics.pickle", 'wb') as to_write:
-        pickle.dump(image_topics_, to_write)
+        pickle.dump([image_topics_], to_write)
 
-    return  img, image_topics_
+    return  img, [image_topics_]
+
+#image_recognition_pipeline(model, img_label_dict )
+
+#model = prepare_image_classification_model()
+#img, image_topics = image_recognition_pipeline(model, img_label_dict )
+# image_topics
+
+
+
+
+
 
 
 # ## 2 — Generate semantic word families
@@ -237,12 +320,23 @@ def get_synonyms( w ):
     #L = [l.name() if '_' not in l.name() else l.name().split('_') for l in wordnet.synsets( w )[0].lemmas()]  # There may be other synonyms in the synset
     #flattened_list = [w if type()]
     #return L #flattened_list
-    return [word for object_name in [syn.name().split('_') for syn in wordnet.synsets( w )[0].lemmas()] for word in object_name]
+    syn_list = []
+    syn_list = [word.split('.')[0] for object_name in                                     [syn.name().split('_') for syn in wordnet.synsets( w )[0].hypernyms() ]                                     for word in object_name if (('_' not in w) or (word.split('.')[0] != w.split('_')[-1]))]
+    #syn_list.extend([word.split('.')[0] for object_name in [syn.name().split('_') for syn in wordnet.synsets( w )[0].lemmas() ] for word in object_name])
+    #syn_list=[word for object_name in [syn.name().split('_') for syn in wordnet.synsets( w )[0].hypernyms()[0].hyponyms() ] for word in object_name]
+    #syn_list.extend([word for object_name in [syn.name().split('_') for syn in wordnet.synsets( w )[0].root_hypernyms()] for word in object_name])
+
+    return syn_list
 
 
 
 
+get_synonyms( "recreational_vehicle" )
 
+
+
+
+#'bird.n.01'.split('.')[0]
 
 
 # ## 3 — Generate all related words
@@ -262,11 +356,13 @@ words_set = set( words.words())
 
 
 import eng_to_ipa as ipa
+import pronouncing as pron
 
 def syllable_count_diff( w1, w2, syllable_count_dict_ ):
     if w2 not in words_set:
         syllable_count_dict_[w2] = ipa.syllable_count( w2 )
     return abs( syllable_count_dict_[ w1 ] - syllable_count_dict_[ w2 ])
+    #return pron.syllable
 
 def same_syllable_count( w1, w2, syllable_count_dict_  ):
     return syllable_count_diff(w1, w2, syllable_count_dict_ ) == 0
@@ -284,14 +380,21 @@ def close_syllable_count( w1, w2, syllable_count_dict_, threshold=2):
 
 def get_sized_rhymes( w, syllable_count_dict_ ):
     word_length_min = 2
-    rhyme_list = ipa.get_rhymes( w )
-    return [ [rhyme for rhyme  in rhyme_list if same_syllable_count( w, rhyme, syllable_count_dict_) and len(rhyme) >= word_length_min and rhyme in words_set]]
+    rhyme_list = pron.rhymes( w )
+    #print(rhyme_list)
+    #rhyme_list = ipa.get_rhymes( w )
+    return [ [rhyme for rhyme  in rhyme_list if close_syllable_count( w, rhyme, syllable_count_dict_, 1) and len(rhyme) >= word_length_min ]]
+    #return [ [rhyme for rhyme  in rhyme_list if close_syllable_count( w, rhyme, syllable_count_dict_, 1) and len(rhyme) >= word_length_min and rhyme in words_set]]
+    #return [ [rhyme for rhyme  in rhyme_list if len(rhyme) >= word_length_min and rhyme in words_set]]
 
 
 
 
 
-# get_sized_rhymes('oyster')
+# pron.rhymes('studio')
+# syllable_count_dict_ = dict({'studio': 3})
+# get_sized_rhymes('studio', syllable_count_dict_ )
+#syllable_count_dict_['studio'] = 3
 
 
 
@@ -306,30 +409,6 @@ dmeta = fuzzy.DMetaphone()
 
 
 
-def phonetic_distance(w1, w2, fuzzy_meta_dict_, fuzzy_nysiis_dict_):
-#     print('fuzzy soundex', lev.distance( soundex(w1), soundex(w2)) )
-#     print('fuzzy dmeta  ', lev.distance( dmeta(w1)[0], dmeta(w2)[0]) )
-#     print('phon dmet    ', lev.distance( phonetics.dmetaphone(w1)[0], phonetics.dmetaphone(w2)[0]) )
-#     print('phon met     ', lev.distance( phonetics.metaphone(w1), phonetics.metaphone(w2)) )
-#     print('fuzzy nysiis ', lev.distance( fuzzy.nysiis(w1), fuzzy.nysiis(w2)) )
-#     print('phon nysiis  ', lev.distance( phonetics.nysiis(w1), phonetics.nysiis(w2)) )
-#     soundex_dist = lev.distance( soundex(w1), soundex(w2))
-    if w2 not in words_set:
-        fuzzy_nysiis_dict_[w2] = fuzzy.nysiis(w2)
-        fuzzy_meta_dict_[w2] = dmeta(w2)[0]
-
-    nysiis_dist = lev.distance( fuzzy_nysiis_dict_[w1],fuzzy_nysiis_dict_[w2])
-    try:
-        dmeta_dist  = lev.distance( fuzzy_meta_dict_[w1],fuzzy_meta_dict_[w2])
-        return np.mean( np.array([  dmeta_dist, nysiis_dist]) )
-    except:
-        return nysiis_dist
-
-
-
-
-
-
 import eng_to_ipa as ipa
 def syllable_penalty(w1, w2, syllable_count_dict_, penalty_factor = 0.2):
 
@@ -338,18 +417,68 @@ def syllable_penalty(w1, w2, syllable_count_dict_, penalty_factor = 0.2):
 
 
 
+def first_letter_discount(w1, w2, discount_value = .6):
+    return discount_value if w1[0] == w2[0] else 0
+
 def last_letter_discount(w1, w2, discount_value = .25):
     return discount_value if w1[-1] == w2[-1] else 0
 
 
 
 
-with open("data/" + "fuzzy_meta_dictionary.pickle", 'rb') as to_read:
-    fuzzy_meta_dict =  pickle.load(to_read)
-with open("data/" + "fuzzy_nysiis_dictionary.pickle", 'rb') as to_read:
-    fuzzy_nysiis_dict =  pickle.load(to_read)
-with open("data/" + "syllable_count_dictionary.pickle", 'rb') as to_read:
-    syllable_count_dict =  pickle.load(to_read)
+def phonetic_distance(w1, w2, fuzzy_meta_dict_, fuzzy_nysiis_dict_):
+#     print('fuzzy soundex', lev.distance( soundex(w1), soundex(w2)) )
+#     print('fuzzy dmeta  ', lev.distance( dmeta(w1)[0], dmeta(w2)[0]) )
+#     print('phon dmet    ', lev.distance( phonetics.dmetaphone(w1)[0], phonetics.dmetaphone(w2)[0]) )
+#     print('phon met     ', lev.distance( phonetics.metaphone(w1), phonetics.metaphone(w2)) )
+#     print('fuzzy nysiis ', lev.distance( fuzzy.nysiis(w1), fuzzy.nysiis(w2)) )
+#     print('phon nysiis  ', lev.distance( phonetics.nysiis(w1), phonetics.nysiis(w2)) )
+#     soundex_dist = lev.distance( soundex(w1), soundex(w2))
+    num_of_measures = 1
+    sum_of_measures = 0
+    if w2 not in words_set:
+        fuzzy_nysiis_dict_[w2] = fuzzy.nysiis(w2)
+        fuzzy_meta_dict_[w2] = dmeta(w2)[0]
+
+    nysiis_dist = lev.distance( fuzzy_nysiis_dict_[w1],fuzzy_nysiis_dict_[w2])
+    num_of_measures +=1
+    sum_of_measures+= nysiis_dist
+    try:
+        dmeta_dist  = lev.distance( fuzzy_meta_dict_[w1],fuzzy_meta_dict_[w2])
+        num_of_measures +=1
+        sum_of_measures+= dmeta_dist
+        #return np.mean( np.array([  dmeta_dist, nysiis_dist, pron_dist]) )
+    except:
+        pass
+    try:
+        pron_dist = round(lev.distance( pron.phones_for_word(w1)[0], pron.phones_for_word(w2)[0]) /3.5)
+        num_of_measures +=1
+        sum_of_measures+= pron_dist
+    except:
+        pass
+    return sum_of_measures/float(num_of_measures)
+    # return np.mean( nysiis_dist, pron_dist )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#     with open("data/" + "fuzzy_meta_dictionary.pickle", 'rb') as to_read:
+#         fuzzy_meta_dict =  pickle.load(to_read)
+#     with open("data/" + "fuzzy_nysiis_dictionary.pickle", 'rb') as to_read:
+#         fuzzy_nysiis_dict =  pickle.load(to_read)
+#     with open("data/" + "syllable_count_dictionary.pickle", 'rb') as to_read:
+#         syllable_count_dict =  pickle.load(to_read)
 
 
 
@@ -381,58 +510,106 @@ def make_phon_fam_for_sem_fam_member( w_record, thresh=3 ):
     non_rhyme_penalty = rhyme_dist + .3
 
     # Find words that are not necessarily rhyms but phonetically similar
+
+    rhyme_word_list = get_sized_rhymes( w_record.word, syllable_count_dict )[0]
+    rhyme_bounty = len( rhyme_word_list )
+    print('length of rhyme list', rhyme_bounty )
+
+
     for word in words_set:
         phon_dist = phonetic_distance( word, w_record.word, fuzzy_meta_dict, fuzzy_nysiis_dict)
         if (phon_dist <= thresh) and (word != w_record.word):
             syll_pen = syllable_penalty( word, w_record.word, syllable_count_dict)
             last_let_disc = last_letter_discount(word, w_record.word)
-            close_word_list.append( Close_word(word.lower(), phon_dist + non_rhyme_penalty + syll_pen - last_let_disc ))
+            first_letter_disc = first_letter_discount(word, w_record.word)
+            close_word_list.append( Close_word(word.lower(), phon_dist + non_rhyme_penalty + syll_pen - last_let_disc - first_letter_disc ))
+        #if len( close_word_list ) > 100:
+        #   break
+    print(len( close_word_list))
 
 
-    rhyme_word_list = get_sized_rhymes( w_record.word, syllable_count_dict )[0]
 
     # Find words that are rhymes
     for word in rhyme_word_list:
             syll_pen = syllable_penalty( word, w_record.word, syllable_count_dict)
             last_let_disc = last_letter_discount(word, w_record.word)
-            close_word_list.append( Close_word(word, rhyme_dist + syll_pen - last_let_disc) )
+            close_word_list.append( Close_word(word, rhyme_dist + syll_pen - last_let_disc - first_letter_disc) )
+            first_letter_disc = first_letter_discount(word, w_record.word)
+            #logger.info('word in rhyme_list: ', word)
 
-
+    print(len( close_word_list))
+    #logger.info('returning a phonic family: ')
     return Phon_family(locus_word = w_record, close_words=close_word_list )
 
 
+
+# with open("data/" + "syllable_count_dictionary.pickle", 'rb') as to_read:
+#     syllable_count_dict =  pickle.load(to_read)get_sized_rhymes('entertainment', syllable_count_dict)syllable_count_diff('entertainment', 'arraignment', syllable_count_dict)pron.syllable_count(pron.phones_for_word('liason')[0])len(syllable_count_dict)ipa.get_rhymes('entertainment')
+# syllable_count_dict['entertainment']'entertainment' in words_setpron.rhymes('cobra')
+
+
+
+#round(lev.distance( pron.phones_for_word("shark")[0], pron.phones_for_word("s8df")[0]) /3.5)
+phon_fam = make_phon_fam_for_sem_fam_member( Close_word('china', .6 ))
+#phon_fam
+# for word in words_set:
+#     try:
+#         pron.phones_for_word(word)[0]
+#     except:
+#         print( word )
 
 
 
 
 # To be replaced or enhanced with Word2Vec `most_similar()`
 def get_most_similar( w ):
-    synonym_dist_setting = .6
-    list_of_duples = [(syn, synonym_dist_setting) for syn in get_synonyms( w )]
+    synonym_dist_setting = .5
+    #list_of_duples = [(syn, synonym_dist_setting) for syn in get_synonyms( w ) if syn !=  w.split('_')[0] else (syn, synonym_dist_setting-.5)]
+    list_of_duples = [(syn, synonym_dist_setting) for syn in get_synonyms( w ) ]
+    # Replace the above line with a for loop that takes into account the if w has an underscore, it's first
+    # item could be in the syn list and be more related than the the 1 penalty suggests
+
     if(w == 'two'):
         additional_words =  [('pair', .95), ('twice', .90)]
         list_of_duples.extend( additional_words )
     list_of_close_words = [Close_word( word=w_str, distance= w_sim) for w_str, w_sim in list_of_duples ]
-
+    print("list of semantically close words: ", list_of_close_words)
     return list_of_close_words
 
 
 
 
 def make_phon_fams_and_sem_family( w ):
-    word_record_ = Close_word(w, 0.0)
+
+    if '_' not in w:
+        word_record_ = Close_word(w, 0.0)
+    else:
+        word_record_ = Close_word(w.split('_')[-1], 0.1)
+
+    #phon_fams_word_set = set()
+    #phon_fams_word_set.add( word_record )
+
+    phon_fams_list = []
+    phon_fams_list.append( make_phon_fam_for_sem_fam_member( word_record_ ) )
 
     sem_sim_words = get_most_similar( w )  # Eventually replace with call to Word2Vec
 
-    phon_fams_list = []
-
+    #phon_fams_word_set = phon_fams_word_set.union( sem_sim_words )
 
     for close_w_record in sem_sim_words:
-        print( close_w_record )
-        phon_fams_list.append( make_phon_fam_for_sem_fam_member( close_w_record ) )
+        #print( close_w_record )
+        if( len(close_w_record.word ) >=2 ):
+            phon_fams_list.append( make_phon_fam_for_sem_fam_member( close_w_record ) )
+
+    print('phon_fams_list length: ', len(phon_fams_list))
 
     return Sem_family(locus_word= word_record_, sem_fam_words = phon_fams_list)
 
+
+
+
+
+#make_phon_fams_and_sem_family( "china" )
 
 
 # ## 4 — Gather candidate phrases
@@ -468,12 +645,23 @@ def phoneticized( w ):
 
 
 
+# def get_matching_phrases( w, phrase_dict_ ):
+#     matched_id_list = []
+#     for phrase_id in phrase_dict_.keys():
+#         if w in phrase_dict_[phrase_id].phon_list:
+#             matched_id_list.append(phrase_id)
+#             #print( phrase_dict_[ phrase_id] )
+#             return matched_id_list
+
+
+
+
 def get_matching_phrases( w, phrase_dict_ ):
     matched_id_list = []
-    for phrase_id in phrase_dict_.keys():
-        if w in phrase_dict_[phrase_id].phon_list:
+    for phrase_id, phrase in phrase_dict_.items():
+         if w in phrase.phon_list:
             matched_id_list.append(phrase_id)
-            print( phrase_dict_[ phrase_id] )
+            #print( phrase_dict_[ phrase_id] )
             return matched_id_list
 
 
@@ -490,6 +678,7 @@ def get_phrases_for_phon_fam( phon_fam_, phrase_dict_ ):
         if matched_phrases:
             for p_id in matched_phrases:
                 word_match_records_.append({'semantic_match': phon_fam_.locus_word.word, 'sem_dist': phon_fam_.locus_word.distance, 'phonetic_match': word.word, 'phon_dist': word.distance, 'phrase_id': p_id, 'dist_score': ''})
+    print("phon fam's number of word_match_records:", len(word_match_records_ ))
     return word_match_records_
 
 
@@ -498,13 +687,15 @@ def get_phrases_for_phon_fam( phon_fam_, phrase_dict_ ):
 def get_phrases_for_sem_fam( sem_fam_, phrase_dict_ ):
     word_match_records_ = []
     for phon_fam_ in sem_fam_.sem_fam_words:
-        print( phon_fam_.locus_word.distance )
+        #print( phon_fam_.locus_word.distance )
         #word_match_records_.extend( get_phrases_for_phon_fam( phon_fam_, sem_fam_.locus_word.distance ) )
         phrases_ = get_phrases_for_phon_fam( phon_fam_, phrase_dict_ )
-
         if len( phrases_ ) > 0:
-            print( phrases_ )
+            #print( phrases_ )
             word_match_records_.extend( phrases_ )
+        #if len(word_match_records_) > 500:
+        #   break
+    print("SEM fam's number of word_match_records:", len(word_match_records_ ))
     return word_match_records_
 
 
@@ -524,11 +715,59 @@ def get_image_topics():
     return [image_topic]
 
 
+
+
+
+
+
+
+
+# with open("data/" + "image_topics.pickle", 'rb') as to_read:
+#     image_topics_ =  pickle.load(to_read)
+
+# with open("data/" + "phrase_dictionary.pickle", 'rb') as to_read:
+#     phrase_dict_ =  pickle.load(to_read)
+
+# col_names = ['semantic_match', 'sem_dist', 'phonetic_match', 'phon_dist', 'phrase_id', 'dist_score']
+# cand_df_ = pd.DataFrame(columns= col_names)
+
+
+
+
+# image_sem_fam = make_phon_fams_and_sem_family( image_topics_[0] )
+
+
+
+
+# cand_df_
+
+
+
+
+# image_sem_fam[1]
+
+
+
+
+# get_image_topics()
+
+
 # ## The equivalent of `main` for the time being, until two or more image topics are handled
 
 
 
-def generate_the_caption( ):
+
+
+
+
+
+#image_topics_
+
+
+
+
+##### SOMEHWERE IN HERE IS THE BOTTLENECK
+def generate_the_captions( ):
     with open("data/" + "image_topics.pickle", 'rb') as to_read:
         image_topics_ =  pickle.load(to_read)
 
@@ -539,18 +778,27 @@ def generate_the_caption( ):
     cand_df_ = pd.DataFrame(columns= col_names)
 
     image_topic_word_ = image_topics_[0]
+#   image_topic_word_ = image_topics_
     image_sem_fam = make_phon_fams_and_sem_family( image_topic_word_ )
 
     word_match_records = get_phrases_for_sem_fam( image_sem_fam, phrase_dict_ )
 
     cand_df_ = cand_df_.append(word_match_records)
-    return cand_df_, image_topic_word_, phrase_dict_
+    return cand_df_, image_topic_word_   #, phrase_dict_
+
+#generate_the_captions( )
+#cand_df_, image_topic_word_, phrase_dict_= generate_the_captions( )
+
+
+
+
+#cand_df_
 
 
 
 
 def compute_candidate_caption_scores(cand_df_):
-    cand_df_['dist_score'] = cand_df_.apply(lambda row: float(row['sem_dist'] + row['phon_dist']), axis=1)
+    cand_df_['dist_score'] = cand_df_.apply(lambda row: (float(row['sem_dist']) + row['phon_dist']/len(row['semantic_match'])), axis=1)
     return cand_df_
 
 
@@ -563,7 +811,7 @@ def compute_candidate_caption_scores(cand_df_):
 
 
 def construct_caption_by_substitution(row_, phon_match, sem_match, phrase_dict_ ):
-    print (phrase_dict_[ row_['phrase_id'] ])
+    #print (phrase_dict_[ row_['phrase_id'] ])
     original_phrase = phrase_dict_[ row_['phrase_id'] ].text_string
     altered_phrase = original_phrase.replace(phon_match, sem_match)
     return altered_phrase
@@ -584,8 +832,14 @@ def get_best_captions(df, phrase_dict_, selection_size=25):
 def process_best_captions_df_and_make_list(cand_df, phrase_dict):
     best_captions_df = get_best_captions(cand_df, phrase_dict)
     #best_captions_df
-    best_captions_list = [caption.capitalize() for caption in best_captions_df['caption'].to_list()]
+    best_captions_list = best_captions_df['caption'].tolist()
+    #best_captions_list = [caption.capitalize() for caption in best_captions_df['caption'].to_list()]
     return best_captions_df, best_captions_list
+
+
+
+
+
 
 
 
@@ -629,14 +883,14 @@ img = mpimg.imread('data/temp.png')
 
 
 def make_image_with_caption( image, caption):
-  ax = plt.subplot(1, 1, 1)
-  plt.axis('off')
-  plt.text( 0.5, -0.1, caption,     horizontalalignment='center', verticalalignment='center',     transform=ax.transAxes, fontsize=16)
-  plt.imshow( image)
+    ax = plt.subplot(1, 1, 1)
+    plt.axis('off')
+    plt.text( 0.5, -0.1, caption,     horizontalalignment='center', verticalalignment='center',     transform=ax.transAxes, fontsize=16)
+    plt.imshow( image)
 
-  plt.tight_layout()
-  plt.savefig('data/image_with_caption.png')
-  plt.show()
+    plt.tight_layout()
+    plt.savefig('data/image_with_caption.png')
+    plt.show()
 
 
 
@@ -667,31 +921,96 @@ def setup():
 
 
 
-def process_captioning_the_image( ):
+#def process_captioning_the_image( ):
 
-	cand_df_, image_topic_word_, phrase_dict_ = generate_the_caption()
+#def process_captioning_the_image_part0( ):
+
+#def process_captioning_the_image_part1( ):
+def process_captioning_the_image_part1( cand_df_, image_topic_word_, phrase_dict_ ):
+
+    #cand_df_, image_topic_word_, phrase_dict_ = generate_the_captions()
+
+    cand_df_ = compute_candidate_caption_scores(cand_df_)
+
+    best_captions_df_ = get_best_captions(cand_df_, phrase_dict_)
+
+    return cand_df_, best_captions_df_, phrase_dict_
+
+def process_captioning_the_image_part2( cand_df_, best_captions_, phrase_dict_ ):
+
+    best_captions_df_, best_captions_list_ = process_best_captions_df_and_make_list(cand_df_, phrase_dict_)
+
+    img_ = mpimg.imread('data/temp.png')
+
+    return img_, best_captions_list_, best_captions_df_
+
+def process_captioning_the_image_part3( img_, best_captions_list_, best_captions_df_):
+
+    make_image_with_caption( img_, best_captions_list_[0])
+
+    display_df_ = get_display_df( best_captions_df_ )
+
+    return display_df_
+
+#process_captioning_the_image( )
 
 
-	cand_df_ = compute_candidate_caption_scores(cand_df_)
 
-	best_captions_df = get_best_captions(cand_df_, phrase_dict_)
 
-	best_captions_df, best_captions_list = process_best_captions_df_and_make_list(cand_df_, phrase_dict_)
 
-	img = mpimg.imread('data/temp.png')
 
-	make_image_with_caption( img, best_captions_list[0])
 
-	display_df_ = get_display_df( best_captions_df )
 
-	return display_df_
+
+#type(display_df.index.tolist())
+
+
+
+
+#make_image_with_caption( img, display_df.index[0] )
+
+
+
+
+# cand_df_, image_topic_word_, phrase_dict_ = generate_the_captions()
+
+
+# cand_df_ = compute_candidate_caption_scores(cand_df_)
+
+# best_captions_df = get_best_captions(cand_df_, phrase_dict_)
+
+# best_captions_df, best_captions_list = process_best_captions_df_and_make_list(cand_df_, phrase_dict_)
+
+# img = mpimg.imread('data/temp.png')
+
+# make_image_with_caption( img, best_captions_list[0])
+
+# display_df_ = get_display_df( best_captions_df )
+
+# display_df
+
+
+
+
+
+
+
+
+
+# cand_df_, image_topic_word_, phrase_dict_ = generate_the_captions()
+
+
+
+
+# cand_df
 
 
 
 
 def display_image():
     img = mpimg.imread('data/image_with_caption.png')
-    st.image(img, width=800)
+    try:
+        st.image(img, width=800)
 
 
 # ### Streamlit code
@@ -705,26 +1024,111 @@ st.write(
 '''
 )
 
-img_num = st.slider('select an image', 1, 5500)
+# https://towardsdatascience.com/image-classification-of-uploaded-files-using-streamlits-killer-new-feature-7dd6aa35fe0
+# ### Excluding Imports ###
+# st.title("Upload + Classification Example")
+# uploaded_file = st.file_uploader("Choose an image...", type="jpg")
+# if uploaded_file is not None:
+#     image = Image.open(uploaded_file)
+#     st.image(image, caption='Uploaded Image.', use_column_width=True)
+#     st.write("")
+#     st.write("Classifying...")
+#     label = predict(uploaded_file)
+#     st.write('%s (%.2f%%)' % (label[1], label[2]*100))
+# uploaded_file = st.file_uploader("text here", type="file_type")
+# Using PIL
+# image = Image.open(uploaded_file)
+# st.image(image, caption='Uploaded Image.')
+
+img_num = st.slider('select a picture from IMAGENET', 1, 5500)
 # ### non-streamlit code
 
 
+
+img_label_dict = get_curated_img_label_dict()
+img_model = load_image_classification_model()
 
 # setup()
 
 
 
 
+img_num=4400
 if img_num is None:
     img_num = 2
 
-image_recognition_pipeline( img_num )
+img, image_topics_list =image_recognition_pipeline(img_model, img_label_dict, img_num )
+
+
+
+
+#image_topics_list
 
 
 
 
 #display_df = process_captioning_the_image(phrase_dict)
-display_df = process_captioning_the_image()
+#display_df = process_captioning_the_image()
+
+#cand_df, image_topic_word, phrase_dict = generate_the_captions()
+cand_df, image_topic_word = generate_the_captions()
+
+
+
+
+
+
+
+
+
+
+cand_df, best_captions_df, phrase_dict = process_captioning_the_image_part1(cand_df, image_topic_word, phrase_dict)
+
+
+
+
+#best_captions_df
+
+
+
+
+#phrase_dict['91df2c78-854a-11eb-a9e5-acde48001122']
+
+
+
+
+#cand_df[cand_df['semantic_match']=='window']
+
+
+
+
+#best_captions_df
+
+
+
+
+img, best_captions_list, best_captions_df = process_captioning_the_image_part2(cand_df, best_captions_df, phrase_dict )
+
+
+
+
+best_captions_df
+
+
+
+
+
+display_df = process_captioning_the_image_part3( img, best_captions_list, best_captions_df)
+
+
+
+
+image_topic_word
+
+
+
+
+
 
 
 
@@ -751,3 +1155,8 @@ if show_other_captions:
 
 
 #image_topic
+
+
+
+
+#display_df

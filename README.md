@@ -35,6 +35,7 @@ The app is not yet deployed on the Streamlit site, but here is some sample outpu
 ![dumbbell](sample_output/dumbbell.png)
 ![two_ladybugs](sample_output/two_ladybugs.png)
 ![snake](sample_output/snake.png)
+![owl](sample_output/owl.png)
 
 
 ### The algorithm

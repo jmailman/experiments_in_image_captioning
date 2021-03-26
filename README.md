@@ -10,7 +10,7 @@ The _Amusemeter Captioner_ is a streamlit web app that lets machine learning dip
 • 5500 images from IMAGENET, 1500 English idioms from https://7esl.com, and corpuses: 117,000 sentences from the  SentiWordNet corpus, the Gensim Word2Vec Text8, and GoogleNews corpuses, The NLTK Synset corpus of synonyms, the Carnegie Mellon (CMU) corpus of English words, and the International Phonetic Alphabet (IPA)
 
 #### Models and Algorithms
-• Pretrained Neural Network (Inception) used for image classification, assigns one of a 1000 possible labels to each image
+• Pretrained Neural Network (Xception) used for image classification, assigns one of a 1000 possible labels to each image
 
 • Gensim Word2Vec used to identify words related to the image label
 

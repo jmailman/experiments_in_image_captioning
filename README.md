@@ -4,7 +4,7 @@
 
 ### Description
 
-The _Amusemeter Captioner_ is a stremlit web app that lets machine learning dip its toes into the waters of witty wordplay by inventing image captions that make you smile. To do this, a Neural Network image classifier joins hands with NLP to algorithmically dance right to the verbographic punchline.
+The _Amusemeter Captioner_ is a streamlit web app that lets machine learning dip its toes into the waters of witty wordplay by inventing image captions that make you smile. To do this, a Neural Network image classifier joins hands with NLP to algorithmically dance right to the verbographic punchline.
 
 ####  Data
 • 5500 images from IMAGENET, 1500 English idioms from https://7esl.com, and corpuses: 117,000 sentences from the  SentiWordNet corpus, the Gensim Word2Vec Text8, and GoogleNews corpuses, The NLTK Synset corpus of synonyms, the Carnegie Mellon (CMU) corpus of English words, and the International Phonetic Alphabet (IPA)

@@ -29,7 +29,7 @@ The app is not yet deployed on the Streamlit site, but here is some sample outpu
 ![beaver_or_otter](sample_output/beaver_or_otter.png)
 ![scorpion](sample_output/scorpion.png)
 ![plane](sample_output/plane.png)
-![dog_or_bear](sample_output/dog_or_bear.png)
+![dog_or_bear](sample_output/dog_or_bear_face.png)
 ![waffle](sample_output/waffle.png)
 ![laundryroom](sample_output/laundryroom.png)
 ![dumbbell](sample_output/dumbbell.png)

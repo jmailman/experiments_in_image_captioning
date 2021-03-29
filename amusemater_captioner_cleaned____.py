@@ -325,7 +325,10 @@ def image_recognition_pipeline( model_,  img_label_dict_, img_num = np.random.ra
 import gensim
 from gensim.models import Word2Vec
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 5fbfa0a526e9cdb7d5daef7365fc952ae1c61595
 #@st.cache (show_spinner=False)
 def load_w2v_kv_model():
     glove_file = glove_dir  = 'data/glove.6B/glove.6B.100d.txt'
@@ -339,6 +342,7 @@ def load_w2v_kv_model():
 #load_w2v_kv_model()
 
 
+<<<<<<< HEAD
 # In[522]:
 
 
@@ -388,6 +392,8 @@ def load_w2v_models():
 load_w2v_models()
 
 
+=======
+>>>>>>> 5fbfa0a526e9cdb7d5daef7365fc952ae1c61595
 # ## 2 — Generate semantic word families
 # 
 # For each label, use Word2Vec `similar` to retrieve list of words semantically related to the image object labels
@@ -544,13 +550,21 @@ def syllable_penalty(w1, w2, syllable_count_dict_, penalty_factor = 0.2):
     return syllable_count_diff( w1, w2, syllable_count_dict_ ) * penalty_factor
 
 
+<<<<<<< HEAD
 # In[532]:
+=======
+# In[272]:
+>>>>>>> 5fbfa0a526e9cdb7d5daef7365fc952ae1c61595
 
 
 def first_letter_discount(w1, w2, discount_value = .4):
     return discount_value if w1[0] == w2[0] else 0
 
+<<<<<<< HEAD
 def last_letter_discount(w1, w2, discount_value = .5): # was .3
+=======
+def last_letter_discount(w1, w2, discount_value = .25):
+>>>>>>> 5fbfa0a526e9cdb7d5daef7365fc952ae1c61595
     return discount_value if w1[-1] == w2[-1] else 0
 
 
@@ -727,7 +741,11 @@ def make_phon_fams_and_sem_family( raw_w, nearby_words_dict_  ):
     w = raw_w.lower()
     w_words = w.split('_')
     
+<<<<<<< HEAD
     if '_' not in w: # in other words if [w] == w_words
+=======
+    if '_' not in w:
+>>>>>>> 5fbfa0a526e9cdb7d5daef7365fc952ae1c61595
         word_record_ = Close_word(w, 0.0)
     else:
         word_record_ = Close_word( w_words[-1], 0.1)
@@ -751,6 +769,7 @@ def make_phon_fams_and_sem_family( raw_w, nearby_words_dict_  ):
             
         # use w2vec words now
         # if label_word_cat_dict[raw_w] is 'object':
+<<<<<<< HEAD
         #     for w_ in w2v_model_bow.most_similar(positive = [*w_words, 'walks'], negative=['man'], topn=4):
         #         if (w_ not in raw_w) and  (word_record_.word not in w_ ):
         #             near_word = Close_word(w_, 0.13)
@@ -770,6 +789,23 @@ def make_phon_fams_and_sem_family( raw_w, nearby_words_dict_  ):
         #         if (w_ not in raw_w) and  (word_record_.word not in w_ ):
         #             near_word = Close_word(w_, 0.12)
         #             phon_fams_list.append( make_phon_fam_for_sem_fam_member( near_word ) )
+=======
+        #     for w_ in model_bow.most_similar(positive = [*w_words, 'walks'], negative=['man'], topn=4)         
+        #         near_word = Close_word(w_, 0.12)
+        #         phon_fams_list.append( make_phon_fam_for_sem_fam_member( near_word ) )
+        #     for w_ in model_skp.most_similar(positive = [*w_words, 'walks'], negative=['man'], topn=4)         
+        #         near_word = Close_word(w_, 0.12)
+        #         phon_fams_list.append( make_phon_fam_for_sem_fam_member( near_word ) )
+        # elif label_word_cat_dict[raw_w] is 'animal':
+        #     for w_ in model_bow.most_similar(positive = [*w_words, 'walks'], negative=['man'], topn=4)
+        #         if w_.endswith(('ing', 'ed', 's', 'e', 'er'))
+        #         near_word = Close_word(w_, 0.12)
+        #         phon_fams_list.append( make_phon_fam_for_sem_fam_member( near_word ) ) 
+        # else:  
+        #     for w_ in model_bow.most_similar(positive = [*w_words, 'walks'], negative=['man'], topn=4)         
+        #         near_word = Close_word(w_, 0.11)
+        #         phon_fams_list.append( make_phon_fam_for_sem_fam_member( near_word ) )
+>>>>>>> 5fbfa0a526e9cdb7d5daef7365fc952ae1c61595
         
         
 
@@ -1114,6 +1150,7 @@ def generate_the_captions( bar_ ):
 #cand_df_
 
 
+<<<<<<< HEAD
 # In[534]:
 
 
@@ -1124,6 +1161,13 @@ def compute_candidate_caption_scores(cand_df_):
     #cand_df_['dist_score'] = cand_df_.apply(lambda row: (float(row['sem_dist']*semantic_weight) + row['phon_dist'] - float(len(row['semantic_match']))*match_length_weight), axis=1)
     cand_df_['dist_score'] = cand_df_.apply(lambda row: (float(row['sem_dist']) + row['phon_dist']/len(row['semantic_match'])), axis=1)
 
+=======
+# In[298]:
+
+
+def compute_candidate_caption_scores(cand_df_):
+    cand_df_['dist_score'] = cand_df_.apply(lambda row: (float(row['sem_dist']) + row['phon_dist']/len(row['semantic_match'])), axis=1)
+>>>>>>> 5fbfa0a526e9cdb7d5daef7365fc952ae1c61595
     return cand_df_
 
 
@@ -1133,17 +1177,26 @@ def compute_candidate_caption_scores(cand_df_):
 # 
 # Choose the top 10(?) and generate a list containing each caption with the original semantic family word substituted into the idiom in addition to jokes containing any of the semantic family words
 
+<<<<<<< HEAD
 # In[553]:
+=======
+# In[445]:
+>>>>>>> 5fbfa0a526e9cdb7d5daef7365fc952ae1c61595
 
 
 def construct_caption_by_substitution(row_, phon_match, sem_match, phrase_dict_ ):
     #print (phrase_dict_[ row_['phrase_id'] ])
+<<<<<<< HEAD
  
+=======
+    
+>>>>>>> 5fbfa0a526e9cdb7d5daef7365fc952ae1c61595
     
     original_phrase = phrase_dict_[ row_['phrase_id'] ].text_string
     sub_word_or_phrase = sem_match
 
     if contrary:
+<<<<<<< HEAD
 #         if sem_match[-1] !='s' :
 #             if sem_match[0] not in {'a', 'e', 'i', 'o'}:
 #                 sub_word_or_phrase = 'not just a ' + sub_word_or_phrase
@@ -1152,6 +1205,15 @@ def construct_caption_by_substitution(row_, phon_match, sem_match, phrase_dict_ 
 #         else:
 #             sub_word_or_phrase = 'not just ' + sub_word_or_phrase    
          sub_word_or_phrase =  sub_word_or_phrase + ' not'
+=======
+        if sem_match[-1] !='s' :
+            if sem_match[0] not in {'a', 'e', 'i', 'o'}:
+                sub_word_or_phrase = 'not just a ' + sub_word_or_phrase
+            else:     
+                sub_word_or_phrase = 'not just an ' + sub_word_or_phrase
+        else:
+            sub_word_or_phrase = 'not just ' + sub_word_or_phrase    
+>>>>>>> 5fbfa0a526e9cdb7d5daef7365fc952ae1c61595
 
     altered_phrase = original_phrase.replace(phon_match, sub_word_or_phrase).replace('_', ' ')
 
@@ -1243,19 +1305,31 @@ img = mpimg.imread('data/temp.png')
 
 
 
+<<<<<<< HEAD
 # In[547]:
 
 
 def make_image_with_caption( image, caption):
 
+=======
+# In[503]:
+
+
+def make_image_with_caption( image, caption):
+>>>>>>> 5fbfa0a526e9cdb7d5daef7365fc952ae1c61595
     ax = plt.subplot(1, 1, 1)
     plt.axis('off')
     f_reduction = max((len(caption)-35), 0)/5
     
     f_size = 16-f_reduction
+<<<<<<< HEAD
     caption = caption[0].upper() + caption[1:]
     #plt.text( 0.5, -0.1, caption.capitalize(), \
     plt.text( 0.5, -0.1, caption,     horizontalalignment='center', verticalalignment='center',     transform=ax.transAxes, fontsize=f_size)
+=======
+
+    plt.text( 0.5, -0.1, caption.capitalize(),     horizontalalignment='center', verticalalignment='center',     transform=ax.transAxes, fontsize=f_size)
+>>>>>>> 5fbfa0a526e9cdb7d5daef7365fc952ae1c61595
     plt.imshow( image)
 
     plt.tight_layout()
@@ -1322,7 +1396,11 @@ def setup():
 #setup()
 
 
+<<<<<<< HEAD
 # In[9]:
+=======
+# In[363]:
+>>>>>>> 5fbfa0a526e9cdb7d5daef7365fc952ae1c61595
 
 
 #def process_captioning_the_image( ):
@@ -1352,6 +1430,7 @@ def process_captioning_the_image_part3( img_, best_captions_list_, best_captions
     #random_choice = random.randint(0, 5)
     
 
+<<<<<<< HEAD
     #optimal_score_captions_df = best_captions_df_[best_captions_df_['dist_score'] == best_captions_df_['dist_score'].min()]
     #cream_of_captions_df = optimal_score_captions_df #.iloc[2, :]
  
@@ -1361,6 +1440,13 @@ def process_captioning_the_image_part3( img_, best_captions_list_, best_captions
     make_image_with_caption( img_, cream_of_captions_df['caption'].to_list()[0])
     #make_image_with_caption( img_, cream_of_captions_df['caption'])
     
+=======
+    
+    cream_of_captions_df = best_captions_df_[best_captions_df_['dist_score'] == best_captions_df_['dist_score'].min()].sample(1)
+    
+    make_image_with_caption( img_, cream_of_captions_df['caption'].to_list()[0])
+
+>>>>>>> 5fbfa0a526e9cdb7d5daef7365fc952ae1c61595
     display_df_ = get_display_df( best_captions_df_ )
 
     return display_df_
@@ -1464,7 +1550,11 @@ st.write(
 # image = Image.open(uploaded_file)
 # st.image(image, caption='Uploaded Image.')
 
+<<<<<<< HEAD
 img_num = st.slider('Slide to select a picture from IMAGENET', 1, 5500, value = 3819)
+=======
+img_num = st.slider('Slide to select a picture from IMAGENET', 1, 5500)
+>>>>>>> 5fbfa0a526e9cdb7d5daef7365fc952ae1c61595
 # ### non-streamlit code
 
 # In[404]:
@@ -1512,10 +1602,13 @@ if contrary:
 if broad or subtle:
     contrary = False
 
+<<<<<<< HEAD
 if subtle:
     w2v_model_bow, w2v_model_skp = load_w2v_models()
 
 
+=======
+>>>>>>> 5fbfa0a526e9cdb7d5daef7365fc952ae1c61595
 #if broad is None:
 #    broad = True
 # In[408]:
@@ -1680,6 +1773,10 @@ if show_other_captions:
 
 
 
+<<<<<<< HEAD
 # In[2]:
+=======
+# In[456]:
+>>>>>>> 5fbfa0a526e9cdb7d5daef7365fc952ae1c61595
 
 

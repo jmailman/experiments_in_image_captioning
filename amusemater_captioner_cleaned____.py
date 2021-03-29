@@ -1322,7 +1322,7 @@ def setup():
 #setup()
 
 
-# In[363]:
+# In[9]:
 
 
 #def process_captioning_the_image( ):
@@ -1352,11 +1352,15 @@ def process_captioning_the_image_part3( img_, best_captions_list_, best_captions
     #random_choice = random.randint(0, 5)
     
 
-    
+    #optimal_score_captions_df = best_captions_df_[best_captions_df_['dist_score'] == best_captions_df_['dist_score'].min()]
+    #cream_of_captions_df = optimal_score_captions_df #.iloc[2, :]
+ 
     cream_of_captions_df = best_captions_df_[best_captions_df_['dist_score'] == best_captions_df_['dist_score'].min()].sample(1)
-    
-    make_image_with_caption( img_, cream_of_captions_df['caption'].to_list()[0])
 
+  
+    make_image_with_caption( img_, cream_of_captions_df['caption'].to_list()[0])
+    #make_image_with_caption( img_, cream_of_captions_df['caption'])
+    
     display_df_ = get_display_df( best_captions_df_ )
 
     return display_df_
@@ -1460,7 +1464,7 @@ st.write(
 # image = Image.open(uploaded_file)
 # st.image(image, caption='Uploaded Image.')
 
-img_num = st.slider('Slide to select a picture from IMAGENET', 1, 5500, value = 971)
+img_num = st.slider('Slide to select a picture from IMAGENET', 1, 5500, value = 3819)
 # ### non-streamlit code
 
 # In[404]:
@@ -1676,6 +1680,6 @@ if show_other_captions:
 
 
 
-# In[555]:
+# In[2]:
 
 
